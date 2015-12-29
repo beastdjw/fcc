@@ -9,8 +9,6 @@ import sqlite3
 logging.basicConfig(filename='/home/dennis/example.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 dbname ='/home/dennis/fcc.sqlite'
-username='fcc'
-password='eonder10'
 
 
 #try:
