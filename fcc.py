@@ -6,21 +6,10 @@ import logging
 import sqlite3
 
 
-logging.basicConfig(filename='/home/dennis/example.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
+logging.basicConfig(filename='fcc_xml_sqlite.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
 dbname ='fcc.sqlite'
-
-
-#try:
-#    conn = sqlite3.connect('/home/dennis/fcc.sqlite')
-#    c = conn.cursor()
-#    c.execute('SELECT SQLITE_VERSION()')
-#    data = c.fetchone()
-#    print "SQLite version %s"% data
-#except sqlite3.Error, e:
-#    print "Error %s:" % e.args[0]
-#    sys.exit(1)
 
 #programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
 # voorbeeld list -> cats = ['Tom', 'Snappy', 'Kitty', 'Jessie', 'Chester']
@@ -48,13 +37,31 @@ teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)
             'F1','F2','F3','F4','F5','F6','F7',
             'MB1','MC1','MC2','MD1','ME1')
 
-print "Ophalen gegevens voor de FC teams:",
-for fccteamnog in teamlist:
-    print fccteamnog,
+team_dic = {}
+
+print "Ophalen gegevens en zet in de db voor de FC teams:",
+try:
+    c.execute("DELETE FROM team")
+    logging.debug("db tabel team geleegd")
+    for fccteamnog in teamlist:
+        print fccteamnog,
+        t = (fccteamnog,)
+        num = c.execute("INSERT INTO team(naam) VALUES(?)", (fccteamnog,))
+        #db.commit()
+        team_dic.update({fccteamnog:c.lastrowid})
+
+    logging.debug("db tabel team gevuld")
+except:
+    #db.rollback()
+    logging.debug("ERROR: db tabel team vullen niet gelukt")
+    db_write_error = True
+
 print " "
+#print team_dic
+#print team_dic['E1']
 #fccteam=teamlist[1]
 #print fccteam
-
+db_write_error = False
 #HOOFDLOOP
 for fccteam in teamlist:
 
@@ -76,18 +83,14 @@ for fccteam in teamlist:
     tree = ET.fromstring(data)
 
     data=[]
+
+    #print 'deleten van team', fccteam,team_dic[fccteam]
     try:
-        #stmt="DELETE * FROM %s"
-        #cursor.executemany(stmt,data)
-    #    cursor.execute('DELETE FROM programma')
-    #    cursor.execute('DELETE FROM uitslag')
-    #    cursor.execute('DELETE FROM competitie')
-    #    cursor.execute('DELETE FROM beker')
-        c.execute("DELETE FROM programma WHERE fccteam=?",(fccteam,))
-        c.execute("DELETE FROM uitslag  WHERE fccteam=?",(fccteam,))
-        c.execute("DELETE FROM competitie  WHERE fccteam=?",(fccteam,))
-        c.execute("DELETE FROM beker  WHERE fccteam=?",(fccteam,))
-        #db.commit()
+        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_dic[fccteam],))
+            #db.commit()
         logging.debug("db  geleegd voor team %s" % fccteam)
     except:
         #db.rollback()
@@ -149,7 +152,7 @@ for fccteam in teamlist:
             #print "aanvang: \t",aanvang
             #print "\n"
 
-            data.append((datum,klasse,thuisteam,uitteam,scheidsrechter,aanwezig,aanvang,fccteam))
+            data.append((datum,klasse,thuisteam,uitteam,scheidsrechter,aanwezig,aanvang,team_dic[fccteam]))
         #print data
         try:
             #print sql
@@ -159,7 +162,7 @@ for fccteam in teamlist:
 
             #c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(?,?,?,?,?,?,?)",data)
         #    cursor.executemany(stmt,data)
-            c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang,fccteam) VALUES(?,?,?,?,?,?,?,?)",data)
+            c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang,fccteam_id) VALUES(?,?,?,?,?,?,?,?)",data)
             logging.debug("gelukt om PROGRAMMA naar de database te schrijven voor team %s" % fccteam)
 
             #conn.commit()
@@ -193,13 +196,13 @@ for fccteam in teamlist:
                      uitslag=l.text
 
             #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-            data.append([datum,wedstrijd,uitslag,fccteam])
+            data.append([datum,wedstrijd,uitslag,team_dic[fccteam]])
 
         try:
             #print data
         #    stmt="INSERT INTO uitslag(datum,wedstrijd,uitslag) VALUES(%s,%s,%s)"
         #    cursor.executemany(stmt,data)
-            c.executemany("INSERT INTO uitslag(datum,wedstrijd,uitslag,fccteam) VALUES(?,?,?,?)",data)
+            c.executemany("INSERT INTO uitslag(datum,wedstrijd,uitslag,fccteam_id) VALUES(?,?,?,?)",data)
             logging.debug("gelukt om UITSLAG naar de database te schrijven voor team %s" % fccteam)
         #    conn.commit()
         #    db.commit()
@@ -275,14 +278,14 @@ for fccteam in teamlist:
                 #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten
 
                 #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-                data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,fccteam))
+                data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,team_dic[fccteam]))
 
             try:
                 #print data
             #    stmt="INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten) \
             #        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             #    cursor.executemany(stmt,data)
-                c.executemany("INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam) \
+                c.executemany("INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam_id) \
                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
                 logging.debug("gelukt om COMPETITIE naar de database te schrijven voor team %s" % fccteam)
             #    db.commit()
@@ -332,14 +335,14 @@ for fccteam in teamlist:
             #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten
 
             #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-            data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,fccteam))
+            data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,team_dic[fccteam]))
 
         try:
             #print data
         #    stmt="INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten) \
         #        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         #    cursor.executemany(stmt,data)
-            c.executemany("INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam) \
+            c.executemany("INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam_id) \
                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
             logging.debug("gelukt om BEKER naar de database te schrijven voor team %s" % fccteam)
         #    db.commit()
@@ -371,50 +374,3 @@ for fccteam in teamlist:
 if conn:
     print 'sqlite db geclosed'
     conn.close()
-
-    #db.close()
-        #print i.items()
-
-    #print (tree.getelementpath(a[0]))
-    #for i in jan:
-    #    print i.tag
-    #    print i.items()
-    #print (tree.getelementpath)
-    #print tree._children
-    #for child in tree:
-        #print child.tag
-        #if (child.tag =='dl'):
-            #for child2 in tree.iter():
-            #    print child2.tag
-
-    #for item in lst:
-        #print item.tag
-        #print item.items()
-        #print item.keys()
-    #    for deeltje in item:
-    #        if (deeltje.get("class")) :
-    #            print deeltje.get("class"),": ",deeltje.text
-
-        #lst2 = lst.findall(".//tr")
-    #print list(tree)
-        #for item2 in lst2:
-        #    print item2.keys
-        #print 'leiders: ', item.attrib.get["id"]
-    #for item in lst:
-        #print 'name: ', item.find('name').text
-        #print 'count: ', item.find('count')
-        #sum = sum + int(item.text)
-        #sum = sum + int(item.find('count').text)
-
-    #print 'Count: ', len(lst)
-    #print 'Sum: ', sum
-    #results = tree.findall('result')
-    #lat = results[0].find('geometry').find('location').find('lat').text
-    #lng = results[0].find('geometry').find('location').find('lng').text
-    #location = results[0].find('formatted_address').text
-
-    #sql = "INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) \
-    #VALUES('%s','%s','%s','%s','%s','%s','%s');" % (datum,klasse,thuisteam,uitteam,scheidsrechter,aanwezig,aanvang)
-    #k = ("ADO'20 O-10",)
-    #cursor.execute("SELECT * FROM programma WHERE uit= %s",k)
-    #print cursor.fetchone()
