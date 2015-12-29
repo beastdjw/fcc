@@ -9,7 +9,7 @@ import sqlite3
 logging.basicConfig(filename='/home/dennis/example.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
-dbname ='/home/dennis/fcc.sqlite'
+dbname ='fcc.sqlite'
 
 
 #try:
