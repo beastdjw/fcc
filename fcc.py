@@ -37,15 +37,26 @@ teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)
             'F1','F2','F3','F4','F5','F6','F7',
             'MB1','MC1','MC2','MD1','ME1')
 
-team_dic = {}
+team_old_dic = {}
+try:
+    ouwe_ids=c.execute("SELECT id,naam FROM team")
+    for row in ouwe_ids:
+        #print "id = ",row[0],
+        #print "name = ",row[1]
+        team_old_dic.update({row[1]:row[0]})
+#cursor = conn.execute("SELECT id, name, address, salary  from COMPANY")
+except:
+    print "niet gelukt om ouwe ids te achterhalen"
 
+print team_old_dic
+
+team_dic = {}
 print "Ophalen gegevens en zet in de db voor de FC teams:",
 try:
     c.execute("DELETE FROM team")
     logging.debug("db tabel team geleegd")
     for fccteamnog in teamlist:
         print fccteamnog,
-        t = (fccteamnog,)
         num = c.execute("INSERT INTO team(naam) VALUES(?)", (fccteamnog,))
         #db.commit()
         team_dic.update({fccteamnog:c.lastrowid})
@@ -86,16 +97,16 @@ for fccteam in teamlist:
 
     #print 'deleten van team', fccteam,team_dic[fccteam]
     try:
-        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_old_dic[fccteam],))
+        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_old_dic[fccteam],))
+        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_old_dic[fccteam],))
+        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_old_dic[fccteam],))
             #db.commit()
         logging.debug("db  geleegd voor team %s" % fccteam)
     except:
         #db.rollback()
         logging.debug("ERROR: db geleegd niet gelukt voor team %s" % fccteam)
-        db_write_error = True
+        #db_write_error = True
 
 #----------------check eerst juiste xml tag nr , daarna vul programma----------------------------------
     data=[]
