@@ -37,50 +37,11 @@ teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)
             'F1','F2','F3','F4','F5','F6','F7',
             'MB1','MC1','MC2','MD1','ME1')
 
-team_old_dic = {}
-try:
-    ouwe_ids=c.execute("SELECT id,naam FROM team")
-    for row in ouwe_ids:
-        #print "id = ",row[0],
-        #print "name = ",row[1]
-        team_old_dic.update({row[1]:row[0]})
-#cursor = conn.execute("SELECT id, name, address, salary  from COMPANY")
-except:
-    print "niet gelukt om ouwe ids te achterhalen"
-
-print team_old_dic
-
 team_dic = {}
-print "Ophalen gegevens en zet in de db voor de FC teams:",
-try:
-    c.execute("DELETE FROM team")
-    logging.debug("db tabel team geleegd")
-    for fccteamnog in teamlist:
-        print fccteamnog,
-        num = c.execute("INSERT INTO team(naam) VALUES(?)", (fccteamnog,))
-        #db.commit()
-        team_dic.update({fccteamnog:c.lastrowid})
-
-    logging.debug("db tabel team gevuld")
-except:
-    #db.rollback()
-    logging.debug("ERROR: db tabel team vullen niet gelukt")
-    db_write_error = True
-
-print " "
-#print team_dic
-#print team_dic['E1']
-#fccteam=teamlist[1]
-#print fccteam
 db_write_error = False
 #HOOFDLOOP
 for fccteam in teamlist:
 
-    #db = MySQLdb.connect(host="localhost", # your host, usually localhost
-    #                     user=username, # your username
-    #                      passwd=password, # your password
-    #                      db=dbname) # name of the data base
-    #cursor = db.cursor()
 
     #url = raw_input('Enter location: ')
     url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/%s' % fccteam
@@ -89,18 +50,28 @@ for fccteam in teamlist:
     print 'Retrieving', url,
     uh = urllib.urlopen(url)
     data = uh.read()
-    print 'Retrieved',len(data),'characters'
+    print 'Retrieved',len(data),'characters',
     #print data
     tree = ET.fromstring(data)
 
     data=[]
 
+    try:
+        c.execute("INSERT OR IGNORE INTO team(naam) VALUES(?)", (fccteam,))
+        c.execute("SELECT id FROM team WHERE naam = ?", (fccteam,))
+        team_id = c.fetchone()[0]
+        print "--- vul team DATABASE team: ",fccteam,"teamid: ",team_id
+        team_dic.update({fccteam:team_id})
+        logging.debug("db team geupdate indien nodig voor team %s" % fccteam)
+    except:
+        logging.debug("ERROR: db team updaten niet gelukt voor team %s" % fccteam)
+
     #print 'deleten van team', fccteam,team_dic[fccteam]
     try:
-        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_old_dic[fccteam],))
-        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_old_dic[fccteam],))
-        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_old_dic[fccteam],))
-        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_old_dic[fccteam],))
+        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_dic[fccteam],))
             #db.commit()
         logging.debug("db  geleegd voor team %s" % fccteam)
     except:
@@ -117,11 +88,11 @@ for fccteam in teamlist:
                     if(item.attrib['id']=='menu-pane'):
                         hoofdelementnr = idx
                     else:
-                        print "GAAT FOUT, item.tag dl met class=tabs bestaat, maar id=menu-pane niet"
+                        logging.debug("GAAT FOUT, item.tag dl met class=tabs bestaat, maar id=menu-pane niet")
                 else:
-                    print "GAAT FOUT, item.tag dl bestaat maar class=tabs niet"
+                    logging.debug("GAAT FOUT, item.tag dl bestaat maar class=tabs niet")
             except AttributeError:
-                print "foutje"
+                logging.debug("ERROR: geen class in xml gevonden met attrib tabs of of niet gevonden menu-pane voor %s" % fccteam)
 
 
     try:
@@ -168,21 +139,11 @@ for fccteam in teamlist:
         try:
             #print sql
             #print data
-        #    stmt="INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
-            #cursor.executemany(stmt,data)
-
-            #c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(?,?,?,?,?,?,?)",data)
-        #    cursor.executemany(stmt,data)
             c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang,fccteam_id) VALUES(?,?,?,?,?,?,?,?)",data)
             logging.debug("gelukt om PROGRAMMA naar de database te schrijven voor team %s" % fccteam)
-
-            #conn.commit()
-            #db.commit()
         except:
             db_write_error = True
             logging.debug('ERROR: niet gelukt om PROGRAMMA naar de database te schrijven')
-            #db.rollback()
-
 
 #-------------------------------------- vul uitslag--------------------------------------------------------------------
 
@@ -210,20 +171,11 @@ for fccteam in teamlist:
             data.append([datum,wedstrijd,uitslag,team_dic[fccteam]])
 
         try:
-            #print data
-        #    stmt="INSERT INTO uitslag(datum,wedstrijd,uitslag) VALUES(%s,%s,%s)"
-        #    cursor.executemany(stmt,data)
             c.executemany("INSERT INTO uitslag(datum,wedstrijd,uitslag,fccteam_id) VALUES(?,?,?,?)",data)
             logging.debug("gelukt om UITSLAG naar de database te schrijven voor team %s" % fccteam)
-        #    conn.commit()
-        #    db.commit()
-        #    print ('gelukt\n')
         except:
-            #db.rollback()
             db_write_error = True
             logging.debug('ERROR: niet gelukt om UITSLAG naar de database te schrijven')
-        #    print('niet gelukt\n')
-
 
 #-----------------------------------------------------vul competitie-----------------------------------
     data=[]

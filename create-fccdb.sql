@@ -1,49 +1,48 @@
 CREATE TABLE `beker` (
- `nr` varchar(5) ,
- `team` varchar(40) ,
- `gespeeld` varchar(5) ,
- `gewonnen` varchar(5) ,
- `gelijk` varchar(5) ,
- `verloren` varchar(5) ,
- `punten` varchar(5) ,
- `voor` varchar(5),
- `tegen` varchar(5) ,
- `verschil` varchar(5) ,
- `penaltypunten` varchar(5),
- `fccteam_id` int(8) 
+ `nr` TEXT,
+ `team` TEXT,
+ `gespeeld` TEXT,
+ `gewonnen` TEXT,
+ `gelijk` TEXT,
+ `verloren` TEXT,
+ `punten` TEXT,
+ `voor` TEXT,
+ `tegen` TEXT,
+ `verschil` TEXT,
+ `penaltypunten` TEXT,
+ `fccteam_id` INTEGER
 );
 CREATE TABLE `competitie` (
- `nr` varchar(5),
- `team` varchar(40),
- `gespeeld` varchar(5),
- `gewonnen` varchar(5),
- `gelijk` varchar(5),
- `verloren` varchar(5),
- `punten` varchar(5),
- `voor` varchar(5),
- `tegen` varchar(5),
- `verschil` varchar(5),
- `penaltypunten` varchar(5),
- `fccteam_id` int(8)
+ `nr` TEXT,
+ `team` TEXT,
+ `gespeeld` TEXT,
+ `gewonnen` TEXT,
+ `gelijk` TEXT,
+ `verloren` TEXT,
+ `punten` TEXT,
+ `voor` TEXT,
+ `tegen` TEXT,
+ `verschil` TEXT,
+ `penaltypunten` TEXT,
+ `fccteam_id` INTEGER
 );
 CREATE TABLE `programma` (
- `datum` varchar(20) ,
- `klasse` varchar(50),
- `thuis` varchar(40),
- `uit` varchar(40),
- `scheidsrechter` varchar(40),
- `aanwezig` varchar(10),
- `aanvang` varchar(10),
- `fccteam_id` int(8)
+ `datum` TEXT,
+ `klasse` TEXT,
+ `thuis` TEXT,
+ `uit` TEXT,
+ `scheidsrechter` TEXT,
+ `aanwezig` TEXT,
+ `aanvang` TEXT,
+ `fccteam_id` INTEGER
 );
 CREATE TABLE `uitslag` (
- `datum` varchar(20),
- `wedstrijd` varchar(80),
- `uitslag` varchar(10),
- `fccteam_id` int(8)
+ `datum` TEXT,
+ `wedstrijd` TEXT,
+ `uitslag` TEXT,
+ `fccteam_id` INTEGER
 );
 CREATE TABLE `team` (
- `id` INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE , 
- `naam` varchar(7)
+ `id` INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+ `naam` TEXT UNIQUE
 );
-
