@@ -45,8 +45,11 @@
 <html>
 
 <head>
-  <title>FC Castricum</title>
+  <title>FC Castricum <?php echo $team; ?></title>
   <meta charset="utf-8">
+  <meta name="description" content="Voor FC Castricum staan hier alle teams het programma, de competitiestand, de bekerstand en de uitslagen">
+  <meta name="keywords" content="FC Castricum,FC,Castricum,voetbal,Castricum,FC-Castricum,wedstrijd,beker,competitie,programma,uitslag,uitslagen,uitwedstrijd,thuiswedstrijd">
+  <meta name="author" content="Veldt IT">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -330,6 +333,8 @@
               <li><a href="?team=F2">F2</a></li>
               <li><a href="?team=F3">F3</a></li>
               <li><a href="?team=F4">F4</a></li>
+              <li><a href="?team=F5">F5</a></li>
+              <li><a href="?team=F6">F6</a></li>
               <li><a href="?team=F7">F7</a></li>
             </ul>
           </li>
@@ -392,7 +397,7 @@
   </div>
 
   <div id="div1" class="container bg-blue"><!--was container-fluid-->
-    <h3>Programma</h3>
+    <h1>Programma</h1>
     <div class="table-responsive">
       <table class="table small">
         <thead>
@@ -429,7 +434,7 @@
   </div>
 
   <div id="div2" class="container bg-lightblue"> <!--was container-fluid-->
-    <h3>Competitie</h3>
+    <h1>Competitie</h1>
     <div class="table-responsive">
       <table class="table small">
         <thead>
@@ -485,7 +490,7 @@ Toggle</button>-->
   </div>
 
   <div id="div3" class="container bg-blue"><!--was container-fluid-->
-    <h3>Beker</h3>
+    <h1>Beker</h1>
     <div class="table-responsive">
       <table class="table small">
         <thead>
@@ -541,7 +546,7 @@ Toggle</button>-->
 
 
   <div id="div4" class="container bg-lightblue"> <!--was container-fluid-->
-    <h3>Uitslagen</h3>
+    <h1>Uitslagen</h1>
     <div class="table-responsive">
       <table class="table small">
         <thead>
