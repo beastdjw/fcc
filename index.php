@@ -10,7 +10,7 @@
   //else
   //   echo "get optie team is $team <br>";
 
-  $db = new SQLite3('/home/dennis/db/fcc.sqlite');
+  $db = new SQLite3('/var/lib/fcc/fcc.sqlite');
   if (!db) die ($error);
 
 

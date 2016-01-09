@@ -6,10 +6,10 @@ import logging
 import sqlite3
 
 
-logging.basicConfig(filename='fcc_xml_sqlite.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
+logging.basicConfig(filename='/var/log/fcc.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
-dbname ='fcc.sqlite'
+dbname ='/var/lib/fcc/fcc.sqlite'
 
 #programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
 # voorbeeld list -> cats = ['Tom', 'Snappy', 'Kitty', 'Jessie', 'Chester']
