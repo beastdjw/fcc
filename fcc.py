@@ -6,26 +6,16 @@ import logging
 import sqlite3
 
 
-logging.basicConfig(filename='/var/log/fcc.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
+logging.basicConfig(filename='fcc.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
-dbname ='/var/lib/fcc/fcc.sqlite'
+dbname ='fcc2.sqlite'
+club_id = 'fzxv68x'
 
 #programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
 # voorbeeld list -> cats = ['Tom', 'Snappy', 'Kitty', 'Jessie', 'Chester']
 # voorbeeld tuple -> months = ('January','February','March','April','May','June','July','August','September','October','November','  December')
 # voorbeeld dictonary -> phonebook = {'Andrew Parson':8806336, 'Emily Everett':6784346, 'Peter Power':7658344, 'Lewis Lame':1122345}
-
-try:
-    conn = sqlite3.connect(dbname)
-    c = conn.cursor()
-except sqlite3.Error, e:
-    if conn:
-        conn.rollback()
-    print "Error %s: "% e.args[0]
-    sys.exit(1)
-
-db_write_error = False
 
 teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)',
             '2 (zon)','3 (zon)',
@@ -37,303 +27,514 @@ teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)
             'F1','F2','F3','F4','F5','F6','F7',
             'MB1','MC1','MC2','MD1','ME1')
 
+try:
+    conn = sqlite3.connect(dbname)
+    c = conn.cursor()
+except sqlite3.Error, e:
+    if conn:
+        conn.rollback()
+    print "Error %s: "% e.args[0]
+    sys.exit(1)
+
 team_dic = {}
 db_write_error = False
-#HOOFDLOOP
-for fccteam in teamlist:
+
+#------------------------------------------VULLEN DB TABEL TEAM--------------------------
+#url = raw_input('Enter location: ')
+teamindeling_url = 'http://mijnclub.nu/clubs/teams/xml/%s' % club_id
+#url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/E3'
+
+print 'Retrieving', teamindeling_url,
+uh = urllib.urlopen(teamindeling_url)
+data = uh.read()
+print 'Retrieved',len(data),'characters'
+teamstree = ET.fromstring(data)
+
+#print tree.tag
+#print tree.attrib
+
+try:
+    c.execute("CREATE TABLE IF NOT EXISTS `teams` (`id` text UNIQUE,`knvb_id` text UNIQUE)")
+except:
+    print 'mislukt'
+    logging.debug("ERROR: de table teams kan niet gecreeerd worden, EXIT dit script")
+    if conn:
+        print 'ERROR: sqlite db geclosed '
+        conn.close()
+    sys.exit(1)
 
 
-    #url = raw_input('Enter location: ')
-    url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/%s' % fccteam
+#deze 2 loops zorgen voor het creeeren van colommen als ze nog niet bestaan
+listelements = []
+for team in teamstree:
+    for teamelement in team:
+        listelements.append(teamelement.tag)
+        setelements = set(listelements)
+for teamelement in setelements:                             #controleer of de column al bestaat, zo niet aanmaken
+    try:
+        c.execute("SELECT %s FROM `teams`" % (teamelement))
+    except:
+        print 'bestaat niet, dus colomn aanmaken:',teamelement
+        try:
+            c.execute("ALTER TABLE teams ADD COLUMN %s text" % (teamelement))
+            logging.debug("INFO: de column %s is nieuw en is toegevoegd aan de teams tabel" % teamelement)
+        except:
+            print 'niet gelukt om column aan te maken:', teamelement
+
+#-------------------het echte vullen----------------------------------------------------------
+teamlist = []
+for team in teamstree:
+    teamproperties={}
+    teamproperties['id'] = team.attrib['id']
+    teamproperties['knvb_id'] = team.attrib['knvb_id']
+    for teamelement in team:
+        teamproperties[teamelement.tag]=teamelement.text
+    #print teamproperties
+    teamlist.append(teamproperties)
+
+#print teamlist
+
+for item in teamlist:
+    columns=[]
+    values =[]
+    for key,value in item.iteritems() :
+        #print key,value,
+        columns.append(key)
+        values.append('\''+value+'\'')
+    #print columns,
+    #print values
+    columnstring = ','.join(str(i) for i in columns)
+    valuesstring = ','.join(str(i) for i in values)
+    #print stringetje
+    #print strangetje
+
+    try:
+        sql = "INSERT OR IGNORE INTO teams(%s) VALUES(%s)" % (columnstring,valuesstring)
+        #print sql
+        c.execute(sql)
+        #print 'fuck gelukt'
+    except:
+        logging.debug('ERROR: niet gelukt om de teamstabel te bewerken')
+        db_write_error = True
+
+
+try:
+    if not db_write_error:
+        conn.commit()
+        logging.debug('gelukt om te commiten naar de db voor de teamstabel')
+    else:
+        conn.rollback()
+        logging.debug('ERROR: rollback gedaan van SQL transactie omdat eerdere query fouten heeft opgeleverd voor teamtabel')
+    #print ('gelukt\n')
+except:
+    db.rollback()
+    logging.debug('ERROR: niet gelukt om te committen naar de db voor teamtabel')
+
+#----------------------------------------EINDE TEAMS DB VULLEN------------------------------
+#---------------------------------------------------------------------------------------------------------------
+#------------------------------------------VULLEN DB TABEL WEDSTRIJDEN--------------------------
+#url = raw_input('Enter location: ')
+wedstrijden_url = 'http://mijnclub.nu/clubs/speelschema/xml/%s/periode,/' % club_id
+#url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/E3'
+
+print 'Retrieving', wedstrijden_url,
+uh = urllib.urlopen(wedstrijden_url)
+data = uh.read()
+print 'Retrieved',len(data),'characters'
+wedstrijdentree = ET.fromstring(data)
+
+#print wedstrijdentree.tag
+#print wedstrijdentree.attrib
+db_write_error = False
+
+try:
+     c.execute("CREATE TABLE IF NOT EXISTS `wedstrijden` (`id` text,'knvb_id' text, 'afgelast' text, 'aanwezig' text)")
+     #-------gaat dit goed? alles deleten, commit komt later dus moet goed gaan
+     c.execute("DELETE FROM `wedstrijden`")
+except:
+#     print 'mislukt'
+     logging.debug("ERROR: de table wedstrijden kan niet gecreeerd worden, EXIT dit script")
+     if conn:
+         print 'ERROR: sqlite db geclosed'
+         conn.close()
+     sys.exit(1)
+
+# #deze 2 loops zorgen voor het creeeren van colommen als ze nog niet bestaan
+setelements = set()
+for wedstrijd in wedstrijdentree.findall('wedstrijden/wedstrijd'):
+    for wedstrijdelement in wedstrijd:
+        setelements.add(wedstrijdelement.tag)
+#print setelements
+
+for wedstrijdelement in setelements:                             #controleer of de column al bestaat, zo niet aanmaken
+    try:
+        c.execute("SELECT %s FROM `wedstrijden`" % (wedstrijdelement))
+    except:
+        print 'bestaat niet, dus colomn aanmaken:',wedstrijdelement
+        try:
+            c.execute("ALTER TABLE wedstrijden ADD COLUMN %s text" % (wedstrijdelement))
+            logging.debug("INFO: de column %s is nieuw en is toegevoegd aan de wedstrijden tabel" % wedstrijdelement)
+        except:
+            print 'niet gelukt om column aan te maken in wedstrijdentabel:', wedstrijdelement
+
+# #-------------------het echte vullen----------------------------------------------------------
+wedstrijdenlist = []
+for wedstrijd in wedstrijdentree.findall('wedstrijden/wedstrijd'):
+    #print wedstrijd.attrib['id'],wedstrijd.attrib['teamnaam'],wedstrijd.attrib['lokatie']
+    #teams.knvb_id
+    wedstrijdproperties = {}
+    wedstrijdproperties['id'] = wedstrijd.attrib['id']
+    try:
+        if (wedstrijd.attrib['afgelast']=='ja'):
+            #print'afgelast:',wedstrijd.attrib['afgelast']
+            wedstrijdproperties['afgelast'] = wedstrijd.attrib['afgelast']
+    except:
+            wedstrijdproperties['afgelast'] = 'nee'
+    c.execute("SELECT knvb_id FROM `teams` WHERE teams.naam=?",(wedstrijd.attrib['teamnaam'],))
+    row = c.fetchone()
+    if row:
+        knvb_id = str(row[0])
+    else:
+        knvb_id = wedstrijd.attrib['teamnaam']
+    #print 'kntje is:',knvb_id
+    wedstrijdproperties['knvb_id'] = knvb_id
+    for wedstrijdelement in wedstrijd:
+        #print wedstrijdelement.tag, wedstrijdelement.text
+        wedstrijdproperties[wedstrijdelement.tag] = wedstrijdelement.text
+        if (wedstrijdelement.tag=='aanvang'):
+            wedstrijdproperties['aanwezig'] = wedstrijdelement.attrib['aanwezig']
+            #print wedstrijdelement.attrib['aanwezig']
+    #print wedstrijdproperties
+    wedstrijdenlist.append(wedstrijdproperties)
+#print wedstrijdenlist
+
+for item in wedstrijdenlist:
+    columns=[]
+    values =[]
+    rawlist =()
+    for key,value in item.iteritems() :
+        #print key,value,
+        columns.append(key)
+        values.append('\''+value+'\'')
+        rawlist= rawlist + (value,)
+        #print key,type(value)
+    #print rawlist
+    #print rawlist,len(rawlist)
+    columnstring = ','.join(i for i in columns)
+    valuesstring = ','.join(i for i in values)
+    vraagtekens ='?'
+    i=1
+    while (i< len(rawlist)):
+        vraagtekens+=',?'
+        i+=1
+    #print vraagtekens
+
+    try:
+        #print rawlist
+        #sql = "INSERT INTO wedstrijden (%s) VALUES(%s)" % (columnstring,valuesstring)
+        sql = "INSERT INTO wedstrijden (%s) VALUES(%s)" % (columnstring,vraagtekens)
+        #print sql,rawlist
+        #c.execute("INSERT OR IGNORE INTO wedstrijden(?) VALUES(?)" % (columnstring,)(valuesstring,))
+        #c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang,fccteam_id) VALUES(?,?,?,?,?,?,?,?)",data)
+        c.execute(sql,rawlist)
+        #c.execute(sql)
+        #conn.commit()
+        #print 'fuck gelukt'
+    except:
+        print 'niet gelukt'
+        logging.debug('ERROR: niet gelukt om de wedstrijdentabel te bewerken')
+        db_write_error = True
+
+try:
+     if not db_write_error:
+         conn.commit()
+         logging.debug('gelukt om te committen voor de wedstrijden naar de db')
+     else:
+         conn.rollback()
+         logging.debug('ERROR: rollback gedaan van SQL transactie omdat eerdere query fouten heeft opgeleverd voor de wedstrijden')
+     #print ('gelukt\n')
+except:
+     db.rollback()
+     logging.debug('ERROR: niet gelukt om te committen naar de db')
+#------------------------------------------EINDE VULLEN DB TABEL WEDSTRIJDEN---------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+#_________________________________________AANMAKEN VAN TABELLEN ALS DEZE NOG NIET BESTAAN--------------------------
+try:
+    c.execute("CREATE TABLE IF NOT EXISTS `competitie` (\
+      `nr` TEXT,\
+      `team` TEXT,\
+      `gespeeld` TEXT,\
+      `gewonnen` TEXT,\
+      `gelijk` TEXT,\
+      `verloren` TEXT,\
+      `punten` TEXT,\
+      `voor` TEXT,\
+      `tegen` TEXT,\
+      `verschil` TEXT,\
+      `penaltypunten` TEXT,\
+      `knvb_id` TEXT NOT NULL\
+     )")
+    c.execute("CREATE TABLE IF NOT EXISTS `beker` (\
+        `nr` TEXT,\
+        `team` TEXT,\
+        `gespeeld` TEXT,\
+        `gewonnen` TEXT,\
+        `gelijk` TEXT,\
+        `verloren` TEXT,\
+        `punten` TEXT,\
+        `voor` TEXT,\
+        `tegen` TEXT,\
+        `verschil` TEXT,\
+        `penaltypunten` TEXT,\
+        `knvb_id` TEXT NOT NULL\
+        )")
+    c.execute("CREATE TABLE IF NOT EXISTS `uitslag` (\
+        `id` TEXT,\
+        `uitslag` TEXT,\
+        `lokatie` TEXT,\
+        `afgelast` TEXT,\
+        `verslag` TEXT,\
+        `datum` TEXT,\
+        `soort` TEXT,\
+        `thuisteam` TEXT,\
+        `uitteam` TEXT,\
+        `knvb_id` TEXT NOT NULL\
+        )")
+     #-------gaat dit goed? alles deleten, commit komt later dus moet goed gaan
+except:
+#     print 'mislukt'
+     logging.debug("ERROR: de table competitie kan niet gecreeerd worden")
+
+#----------------------------------------EINDE AANMAKEN TABELLEN
+
+
+
+#voor uitslagen:http://mijnclub.nu/clubs/uitslagen/xml/fzxv68x/?team=O10%201&periode=SEIZOEN&seizoen=8
+#http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/O10%201?layout=stand&stand=1
+#http://mijnclub.nu/clubs/teams/embed/fzxv68x/team/1%20%28zat%29?layout=stand&stand=1&format=xml
+#verslag = http://mijnclub.nu/clubs/wedstrijdverslagen/FZXV68X/wedstrijd/2421886?tmpl=component&layout=detail
+#DONE: PROGRAMMA; TO DO: STAND, STAND BEKER, UITSLAGEN
+
+#----------------------------PER TEAM INVULLEN: STAND, STAND BEKER, UITSLAGEN
+team_dic = {}
+db_write_error = False
+try:
+    c.execute("SELECT knvb_id,naam FROM teams") #LIMIT 5 op het einde voor DEBUG doeleinden
+    teams = c.fetchall()
+except:
+    pass
+for team in teams:
+    print team[0],team[1]
+    team_dic[str(team[0])] = str(team[1])
+#------------------------------------------------HOOFDLOOP om de 3 tabellen in te vullen
+for knvb_id,teamnaam in team_dic.iteritems():
+    #print teamnaam,knvb_id
+
+    url = 'http://mijnclub.nu/clubs/teams/embed/%s/team/%s?layout=stand&stand=1&format=xml' % (club_id,teamnaam) #stand
+    url2 = 'http://mijnclub.nu/clubs/uitslagen/xml/%s/?team=%s&periode=SEIZOEN&seizoen=8' % (club_id,teamnaam) #uitslag
+    url3 = 'http://mijnclub.nu/clubs/teams/xml/%s/team/%s' % (club_id,teamnaam) #bekerstand
     #url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/E3'
 
-    print 'Retrieving', url,
+    print 'Retrieving standurl', url,
     uh = urllib.urlopen(url)
     data = uh.read()
-    print 'Retrieved',len(data),'characters',
+    print 'Retrieved',len(data),'characters'
     #print data
-    tree = ET.fromstring(data)
+    standtree = ET.fromstring(data)
+    print 'Retrieving uitslagurl', url2,
+    uh = urllib.urlopen(url2)
+    data = uh.read()
+    print 'Retrieved',len(data),'characters'
+    #print data
+    uitslagtree = ET.fromstring(data)
+    print 'Retrieving bekerurl', url3,
+    uh = urllib.urlopen(url3)
+    data = uh.read()
+    print 'Retrieved',len(data),'characters'
+    #print data
+    try:
+        bekertree = ET.fromstring(data)
+        bekertreeopgehaald = True
+    except:
+        bekertreeopgehaald = False
+        logging.debug("ERROR: kan bekertree voor team %s niet inladen waarschijnlijk omdat de url niet goed is, url %s" % (teamnaam,url3))
+
 
     data=[]
-
+    # #print 'deleten van team', fccteam,team_dic[fccteam]
     try:
-        c.execute("INSERT OR IGNORE INTO team(naam) VALUES(?)", (fccteam,))
-        c.execute("SELECT id FROM team WHERE naam = ?", (fccteam,))
-        team_id = c.fetchone()[0]
-        print "--- vul team DATABASE team: ",fccteam,"teamid: ",team_id
-        team_dic.update({fccteam:team_id})
-        logging.debug("db team geupdate indien nodig voor team %s" % fccteam)
-    except:
-        logging.debug("ERROR: db team updaten niet gelukt voor team %s" % fccteam)
-
-    #print 'deleten van team', fccteam,team_dic[fccteam]
-    try:
-        c.execute("DELETE FROM programma WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM uitslag  WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM competitie  WHERE fccteam_id=?",(team_dic[fccteam],))
-        c.execute("DELETE FROM beker  WHERE fccteam_id=?",(team_dic[fccteam],))
+        c.execute("DELETE FROM competitie WHERE knvb_id=? AND EXISTS (SELECT 1 FROM competitie WHERE knvb_id=?)",(knvb_id,knvb_id))
+        c.execute("DELETE FROM uitslag WHERE knvb_id=? AND EXISTS (SELECT 1 FROM uitslag WHERE knvb_id=?)",(knvb_id,knvb_id))
+        if bekertreeopgehaald==True:
+            c.execute("DELETE FROM beker WHERE knvb_id=? AND EXISTS (SELECT 1 FROM beker WHERE knvb_id=?)",(knvb_id,knvb_id))
             #db.commit()
-        logging.debug("db  geleegd voor team %s" % fccteam)
+        logging.debug("db  geleegd voor team %s met knvb_id %s" % (teamnaam,knvb_id))
     except:
         #db.rollback()
-        logging.debug("ERROR: db geleegd niet gelukt voor team %s" % fccteam)
+        logging.debug("ERROR: db geleegd niet gelukt voor team %s met knvb_id %s" % (teamnaam,knvb_id))
         #db_write_error = True
 
-#----------------check eerst juiste xml tag nr , daarna vul programma----------------------------------
-    data=[]
-    for idx,item in enumerate(tree):
-        if ((item.tag=='dl') ):  #& (item.attrib['class']=='tabs')
-            try:
-                if (item.attrib['class']=='tabs'): #print getattr(item,'class')
-                    if(item.attrib['id']=='menu-pane'):
-                        hoofdelementnr = idx
-                    else:
-                        logging.debug("GAAT FOUT, item.tag dl met class=tabs bestaat, maar id=menu-pane niet")
-                else:
-                    logging.debug("GAAT FOUT, item.tag dl bestaat maar class=tabs niet")
-            except AttributeError:
-                logging.debug("ERROR: geen class in xml gevonden met attrib tabs of of niet gevonden menu-pane voor %s" % fccteam)
-
-
     try:
-        sections = tree[hoofdelementnr][1][0][1] # hoofdelementnr moet tag dl zijn met attribute class=tabs en is=menu-pane ,1=dd,0=table,1=tbody,
-        gevonden=True
+        standtree_diep = standtree.findall('table/tbody/tr')
+        gevonden = True
     except:
-        print "Niks gevonden voor het programma van team %s" % fccteam
-
-        gevonden=False
-
-
-
-    if (gevonden==True):
-        for wedstrijd in sections:
-            for l in wedstrijd:
-                if (l.get("class") == 'datum'):
-                    datum = l.text
-                if (l.get("class") == 'soort klasse'):
-                    klasse = l.text
-                if (l.get("class") == 'thuisteam'):
-                    thuisteam = l.text
-                if (l.get("class") == 'uitteam'):
-                    uitteam = l.text
-                if (l.get("class") == 'scheidsrechter'):
-                    scheidsrechter = l.text
-                if (l.get("class") == 'aanvang'):
-                    aanvang = l.text
-                if (l.get("class") == 'aanwezig'):
-                    aanwezig = l.text
-
-            #print "datum:\t\t",datum
-            #print "soort klasse: \t",klasse
-            #print "thuisteam: \t",thuisteam
-            #print "uitteam: \t",uitteam
-            if (scheidsrechter == None):
-                scheidsrechter = "niet bekend"
-            #print "scheidsrechter:\t",scheidsrechter
-            #print "aanwezig: \t",aanwezig
-            #print "aanvang: \t",aanvang
-            #print "\n"
-
-            data.append((datum,klasse,thuisteam,uitteam,scheidsrechter,aanwezig,aanvang,team_dic[fccteam]))
-        #print data
-        try:
-            #print sql
-            #print data
-            c.executemany("INSERT INTO programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang,fccteam_id) VALUES(?,?,?,?,?,?,?,?)",data)
-            logging.debug("gelukt om PROGRAMMA naar de database te schrijven voor team %s" % fccteam)
-        except:
-            db_write_error = True
-            logging.debug('ERROR: niet gelukt om PROGRAMMA naar de database te schrijven')
-
-#-------------------------------------- vul uitslag--------------------------------------------------------------------
-
-    data=[]
-    try:
-        sections = tree[hoofdelementnr][3][0][1] #hoofdelementnr moet tag dl zijn met attribute class=tabs en is=menu-pane,3=dd,0=table,1=tbody,
-        #print sections
-        gevonden=True
-    except:
-        print "Niks gevonden voor de uitslag van team %s" % fccteam
-        gevonden=False
-
-    #print "gevonden",gevonden
+        gevonden = False
     if (gevonden):
-        for wedstrijd in sections:
-            for idx,l in enumerate(wedstrijd):
-                if idx==0:
-                    datum=l.text
-                if idx==1:
-                    wedstrijd=l.text
-                if idx==2:
-                     uitslag=l.text
+        for td in standtree_diep:
+            #print standpositie
+            for standprops in td:
+                #print standprops.attrib['class'],standprops.text
+                if (standprops.get("class") == 'nr'):
+                    nr = standprops.text
+                if (standprops.get("class") == 'team'):
+                    team = standprops.text
+                if (standprops.get("class") == 'played'):
+                    gespeeld = standprops.text
+                if (standprops.get("class") == 'wins'):
+                    gewonnen = standprops.text
+                if (standprops.get("class") == 'draws'):
+                    gelijk = standprops.text
+                if (standprops.get("class") == 'losses'):
+                    verloren = standprops.text
+                if (standprops.get("class") == 'points'):
+                    punten = standprops.text
+                if (standprops.get("class") == 'for'):
+                    voor = standprops.text
+                if (standprops.get("class") == 'against'):
+                    tegen = standprops.text
+                if (standprops.get("class") == 'difference'):
+                    verschil = standprops.text
+                if (standprops.get("class") == 'penaltypoints'):
+                    penaltypunten = standprops.text
 
-            #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-            data.append([datum,wedstrijd,uitslag,team_dic[fccteam]])
+            #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id
 
-        try:
-            c.executemany("INSERT INTO uitslag(datum,wedstrijd,uitslag,fccteam_id) VALUES(?,?,?,?)",data)
-            logging.debug("gelukt om UITSLAG naar de database te schrijven voor team %s" % fccteam)
-        except:
-            db_write_error = True
-            logging.debug('ERROR: niet gelukt om UITSLAG naar de database te schrijven')
-
-#-----------------------------------------------------vul competitie-----------------------------------
-    data=[]
+                                #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
+            data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id))
 
     try:
-        sections = tree[hoofdelementnr][5][3][0]
-        dezetreebestaat = True
+        #print data
+    #    stmt="INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten) \
+    #        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    #    cursor.executemany(stmt,data)
+        c.executemany("INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
+
+        logging.debug("gelukt om COMPETITIE naar de database te schrijven voor team %s" % teamnaam)
+    #    db.commit()
+    #    print ('gelukt\n')
     except:
-        dezetreebestaat = False
-        print "Niks gevonden voor de competitie van team %s" % fccteam
-
-    if dezetreebestaat:
-        try:
-            if (tree[hoofdelementnr][5][3][0].attrib['class']=='ranking'): #print getattr(item,'class')
-                #print "hallo class is ranking"
-                comp_soort=0
-        except AttributeError:
-            print "foutje"
-        try:
-            if (tree[hoofdelementnr][5][3][0].attrib['class']=='periodetitel'): #print getattr(item,'class')
-                #print "hallo class is periodetitel"
-                comp_soort=1
-        except AttributeError:
-            print "foutje"
-
-        if (comp_soort==None):
-            print "geen class ranking of periodetitel gevonden"
-            exit()
-        #if tree[hoofdelementnr][5][3][0].attrib['class=']
-
-        try:
-            sections = tree[hoofdelementnr][5][3][comp_soort][2] #jjj,5=dd,3=div,0=table,2=tbody,
-            gevonden=True
-        except:
-            print "Niks gevonden voor de competitie van team %s" % fccteam
-            gevonden=False
-        if (gevonden):
-            for stand in sections:
-                for l in stand:
-                    if (l.get("class") == 'nr'):
-                        nr = l.text
-                    if (l.get("class") == 'team'):
-                        team = l.text
-                    if (l.get("class") == 'played'):
-                        gespeeld = l.text
-                    if (l.get("class") == 'wins'):
-                        gewonnen = l.text
-                    if (l.get("class") == 'draws'):
-                        gelijk = l.text
-                    if (l.get("class") == 'losses'):
-                        verloren = l.text
-                    if (l.get("class") == 'points'):
-                        punten = l.text
-                    if (l.get("class") == 'for'):
-                        voor = l.text
-                    if (l.get("class") == 'against'):
-                        tegen = l.text
-                    if (l.get("class") == 'difference'):
-                        verschil = l.text
-                    if (l.get("class") == 'penaltypoints'):
-                        penaltypunten = l.text
-
-                #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten
-
-                #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-                data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,team_dic[fccteam]))
-
+         db_write_error = True
+         logging.debug('ERROR: niet gelukt om COMPETITIE naar de database te schrijven')
+    #    print('niet gelukt\n')
+#------------------------------------------------------------------COMPETITIE(stand) ingelezen Nu uitslagen
+    data=[]
+    try:
+        uitslagtree_diep = uitslagtree.findall('wedstrijd')
+        gevonden = True
+    except:
+        gevonden = False
+    if (gevonden):
+        for wedstrijddetails in uitslagtree_diep:
+            wed_id = wedstrijddetails.attrib['id']
+            lokatie = wedstrijddetails.attrib['lokatie']
+            #teamnaam = wedstrijddetails.attrib['teamnaam']
+            #team_id = wedstrijddetails.attrib['team_id']
             try:
-                #print data
-            #    stmt="INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten) \
-            #        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            #    cursor.executemany(stmt,data)
-                c.executemany("INSERT INTO competitie(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam_id) \
-                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
-                logging.debug("gelukt om COMPETITIE naar de database te schrijven voor team %s" % fccteam)
-            #    db.commit()
-            #    print ('gelukt\n')
+                if (wedstrijddetails.attrib['afgelast']=='ja'):
+                    afgelast = 'ja'
             except:
-                 db_write_error = True
-                 logging.debug('ERROR: niet gelukt om COMPETITIE naar de database te schrijven')
-            #    print('niet gelukt\n')
+                afgelast = 'nee'
+            try:
+                uitslag = (wedstrijddetails.find('uitslag')).text
+            except:
+                uitslag = '-'
+                continue
+            verslag = wedstrijddetails.attrib['verslag']
+            datum = (wedstrijddetails.find('datum')).text
+            soort = (wedstrijddetails.find('soort')).text
+            thuisteam = (wedstrijddetails.find('thuisteam')).text
+            uitteam = (wedstrijddetails.find('uitteam')).text
 
-
-#-------------------------vullen competitie----------------------------------------------------------------------------
-    data=[]
-
-    try:
-        sections = tree[hoofdelementnr][7][3][0][2]# hoofdelementnr moet tag dl zijn met attribute class=tabs en is=menu-pane ,1=dd,0=table,1=tbody,
-        gevonden=True
-    except:
-        print "Niks gevonden in de competitie van team %s" % fccteam
-        gevonden=False
-
-    if(gevonden):
-        for stand in sections:
-            for l in stand:
-                if (l.get("class") == 'nr'):
-                    nr = l.text
-                if (l.get("class") == 'team'):
-                    team = l.text
-                if (l.get("class") == 'played'):
-                    gespeeld = l.text
-                if (l.get("class") == 'wins'):
-                    gewonnen = l.text
-                if (l.get("class") == 'draws'):
-                    gelijk = l.text
-                if (l.get("class") == 'losses'):
-                    verloren = l.text
-                if (l.get("class") == 'points'):
-                    punten = l.text
-                if (l.get("class") == 'for'):
-                    voor = l.text
-                if (l.get("class") == 'against'):
-                    tegen = l.text
-                if (l.get("class") == 'difference'):
-                    verschil = l.text
-                if (l.get("class") == 'penaltypoints'):
-                    penaltypunten = l.text
-
-            #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten
-
-            #print("Datum: %s Wedstrijd: %s Uistlag: %s" % (datum,wedstrijd,uitslag))
-            data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,team_dic[fccteam]))
+            data.append((wed_id,uitslag,lokatie,afgelast,verslag,datum,soort,thuisteam,uitteam,knvb_id))
 
         try:
             #print data
-        #    stmt="INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten) \
-        #        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        #    cursor.executemany(stmt,data)
-            c.executemany("INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,fccteam_id) \
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
-            logging.debug("gelukt om BEKER naar de database te schrijven voor team %s" % fccteam)
+            c.executemany("INSERT INTO uitslag(id,uitslag,lokatie,afgelast,verslag,datum,soort,thuisteam,uitteam,knvb_id) VALUES(?,?,?,?,?,?,?,?,?,?)",data)
+
+            logging.debug("gelukt om UITSLAG naar de database te schrijven voor team %s" % teamnaam)
+            conn.commit()
         #    db.commit()
         #    print ('gelukt\n')
         except:
-             db_write_error = True
-             logging.debug('ERROR: niet gelukt om BEKER naar de database te schrijven')
+            logging.debug('ERROR: niet gelukt om UITSLAG naar de database te schrijven')
+            conn.rollback()
+        #print('niet gelukt\n')
+
+    #---------------------------------------------------EINDE uitslag VULLEN
+    #-------------------------------------------nu de beker
+    data=[]
+    try:
+        if (bekertreeopgehaald==False):
+            raise
+        beker_diep = bekertree.findall("dl/dd/div/")
+        #print 'gevonden'
+        gevonden = True
+    except:
+        gevonden = False
+
+    if (gevonden):
+        #print repr(beker_diep)
+
+        for div in beker_diep:
+            #print repr(jan)
+            if (div.get('id')=='content_bekerstand'):
+                for table in div:
+                    for tbody in table:
+                        if (tbody.tag=="tbody"):
+                            for tds in tbody:
+                                for td in tds:
+                                    if (td.get("class") == 'nr'):
+                                        nr = td.text
+                                    if (td.get("class") == 'team'):
+                                        team = td.text
+                                    if (td.get("class") == 'played'):
+                                        gespeeld = td.text
+                                    if (td.get("class") == 'wins'):
+                                        gewonnen = td.text
+                                    if (td.get("class") == 'draws'):
+                                        gelijk = td.text
+                                    if (td.get("class") == 'losses'):
+                                        verloren = td.text
+                                    if (td.get("class") == 'points'):
+                                        punten = td.text
+                                    if (td.get("class") == 'for'):
+                                        voor = td.text
+                                    if (td.get("class") == 'against'):
+                                        tegen = td.text
+                                    if (td.get("class") == 'difference'):
+                                        verschil = td.text
+                                    if (td.get("class") == 'penaltypoints'):
+                                        penaltypunten = td.text
+                                #print nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id
+                                data.append((nr, team, gespeeld, gewonnen, gelijk, verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id))
+
+        try:
+            #print data
+            c.executemany("INSERT INTO beker(nr,team,gespeeld,gewonnen,gelijk,verloren,punten,voor,tegen,verschil,penaltypunten,knvb_id) \
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",data)
+            logging.debug("gelukt om BEKER naar de database te schrijven voor team %s" % teamnaam)
+            conn.commit()
+        #    print ('gelukt\n')
+        except:
+             #db_write_error = True
+             logging.debug('ERROR: niet gelukt om BEKER naar de database te schrijven voor %s' % teamnaam)
+             conn.rollback()
         #    print('niet gelukt\n')
 
-    #db_write_error = True
 
-    #print "db_write_error:",db_write_error
 
-    try:
-        if not db_write_error:
-            conn.commit()
-            #        db.commit()
-            #print "commitje"
-            logging.debug('gelukt om te commiten naar de db')
-        else:
-            conn.rollback()
-    #        db.rollback()
-            logging.debug('ERROR: rollback gedaan van SQL transactie omdat eerdere query fouten heeft opgeleverd')
-        #print ('gelukt\n')
-    except:
-    #    db.rollback()
-        logging.debug('ERROR: niet gelukt om te committen naar de db')
-
+#---------------------------------------------------EINDE VULLEN UITSLAG,STAND,STANDBEKER
+#----------------------------------------------------------------------------------------------
 if conn:
     print 'sqlite db geclosed'
     conn.close()

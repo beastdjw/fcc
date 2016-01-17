@@ -5,11 +5,6 @@
   $team = htmlspecialchars($_GET["team"]);
   $cookie_name = "fccastricum_team";
 
-  //if (empty($team))
-  //   echo "geen GET opties meegeven<br>";
-  //else
-  //   echo "get optie team is $team <br>";
-
   $db = new SQLite3('/var/lib/fcc/fcc.sqlite');
   if (!db) die ($error);
 
@@ -17,7 +12,7 @@
 
   if ($team) {
     //$sql = "SELECT DISTINCT fccteam from competitie";
-    $sql = "SELECT naam from team";
+    $sql = "SELECT naam from teams";
     $result = $db->query($sql);
     if (!result) die("Cannot execute query.");
     $gevonden= False; //initialisatie
@@ -382,14 +377,15 @@
       <p>Uitslag laatste wedstrijd
         <br>
         <?php
-          $sql = "SELECT datum,wedstrijd,uitslag
-                  FROM uitslag JOIN team
-                  ON uitslag.fccteam_id=team.id
-                  WHERE team.naam='$team' LIMIT 1";
+          $sql = "SELECT datum,thuisteam,uitteam,uitslag,uitslag.soort
+                  FROM uitslag JOIN teams
+                  ON uitslag.knvb_id=teams.knvb_id
+                  WHERE teams.naam='$team' LIMIT 1";
           $result = $db->query($sql);
           if (!result) die("Cannot execute query.");
           while ($row = $result->fetchArray()) {
-              echo $row["wedstrijd"]."<br><font size=\"15\">".$row["uitslag"]."</font><br>Gespeeld op: ".$row["datum"];
+            $date = date_create($row["datum"]);
+            echo $row["thuisteam"]." - ".$row["uitteam"]."<br><font size=\"15\">".$row["uitslag"]."</font><br>".$row["soort"]."wedstrijd gespeeld op: ".date_format($date, 'j-n-Y');//
           }
         ?>
       </p>
@@ -415,16 +411,18 @@
         <tbody>
           <?php
 
-    $sql = "SELECT datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang
-            FROM programma JOIN team
-            ON programma.fccteam_id=team.id
-            WHERE team.naam='$team'";
+    $sql = "SELECT datum,afgelast,aanwezig,aanvang,thuisteam,uitteam,wedstrijden.soort,scheidsrechter
+            FROM wedstrijden JOIN teams
+            ON wedstrijden.knvb_id=teams.knvb_id
+            WHERE teams.naam='$team'";
     $result = $db->query($sql);
     if (!result) die("Cannot execute query.");
-
     // output data of each row
     while($row = $result->fetchArray()) {
-      echo "<tr><td>".$row["datum"]."</td><td>".$row["aanwezig"]."</td><td>".$row["aanvang"]."</td><td>".$row["thuis"]."</td><td>".$row["uit"]."</td><td>".$row["klasse"]."</td><td>".$row["scheidsrechter"]."</td>"."</tr>";
+      if ($row["afgelast"]=='ja')
+        echo "<tr bgcolor=red><td>".$row["datum"]."</td><td>".$row["aanwezig"]."</td><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td><strong>"."AFGELAST"."</td></strong><td>"."<strong>AFGELAST"."</td>"."</strong></tr>";
+      else
+        echo "<tr><td>".$row["datum"]."</td><td>".$row["aanwezig"]."</td><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td>".$row["soort"]."</td><td>".$row["scheidsrechter"]."</td>"."</tr>";
     }
 
     ?>
@@ -456,9 +454,9 @@
         <tbody>
           <?php
     $sql = "SELECT nr,team,punten,gespeeld,gewonnen,gelijk,verloren,voor,tegen,verschil,penaltypunten
-            FROM competitie JOIN team
-            ON competitie.fccteam_id=team.id
-            WHERE team.naam='$team'";
+            FROM competitie JOIN teams
+            ON competitie.knvb_id=teams.knvb_id
+            WHERE teams.naam='$team'";
     $result = $db->query($sql);
     if (!result) die("Cannot execute query.");
 
@@ -513,9 +511,9 @@ Toggle</button>-->
           <?php
 
     $sql = "SELECT nr,team,punten,gespeeld,gewonnen,gelijk,verloren,voor,tegen,verschil,penaltypunten
-            FROM beker JOIN team
-            ON beker.fccteam_id=team.id
-            WHERE team.naam='$team'";
+            FROM beker JOIN teams
+            ON beker.knvb_id=teams.knvb_id
+            WHERE teams.naam='$team'";
     $result = $db->query($sql);
     if (!result) die("Cannot execute query.");
 
@@ -552,23 +550,25 @@ Toggle</button>-->
         <thead>
           <tr>
             <th>Datum</th>
-            <th>Wedstrijd</th>
+            <th>Thuisteam</th>
+            <th>Uitteam</th>
             <th>Uitslag</th>
+            <th>Klasse</th>
           </tr>
         </thead>
 
         <tbody>
           <?php
 
-    $sql = "SELECT datum,wedstrijd,uitslag
-            FROM uitslag JOIN team
-            ON uitslag.fccteam_id=team.id
-            WHERE team.naam='$team'";
+    $sql = "SELECT datum,thuisteam,uitteam,uitslag,uitslag.soort
+            FROM uitslag JOIN teams
+            ON uitslag.knvb_id=teams.knvb_id
+            WHERE teams.naam='$team'";
     $result = $db->query($sql);
     if (!result) die("Cannot execute query.");
 
     while($row = $result->fetchArray()) {
-        echo "<tr><td>".$row["datum"]."</td><td>".$row["wedstrijd"]."</td><td>".$row["uitslag"]."</td>"."</tr>";
+        echo "<tr><td>".$row["datum"]."</td><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitslag"]."</td><td>".$row["soort"]."</td>"."</tr>";
     }
 
     $db->close();
