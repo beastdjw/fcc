@@ -9,4 +9,5 @@ Deze software zorgt voor een website voor je voetbalclub. De website is gebaseer
 3. run dan: python fcc.py
 4. controleer of de db gevuld is
 5. browse naar de website met de php file en als alles goed gaat dan heb je een responsive website voor je voetbalclub
+
 ---
