@@ -6,10 +6,7 @@ Deze software zorgt voor een website voor je voetbalclub. De website is gebaseer
 
 1. copieer de de php file in de directory van je apache server (andere kan ook, als ie maar php ondersteunt)
 2. zet de python file in een directory die je zelf uitkiest (b.v. /usr/lib/fcc)
-3. dan creeer je de database op basis van de sqlfile. Bijvoorbeeld: sqlite3 fcc.sqlite << create-fccdb.sql
-4. controleer de db en structuur
-5. run dan: python fcc.py
-6. controleer of de db gevuld is
-7. browse naar de website met de php file en als alles goed gaat dan heb je een responsive website voor je voetbalclub
-
+3. run dan: python fcc.py
+4. controleer of de db gevuld is
+5. browse naar de website met de php file en als alles goed gaat dan heb je een responsive website voor je voetbalclub
 ---

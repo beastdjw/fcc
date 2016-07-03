@@ -1,7 +1,7 @@
 import urllib
 import xml.etree.ElementTree as ET
 import sys
-import MySQLdb
+#import MySQLdb
 import logging
 import sqlite3
 
@@ -9,7 +9,7 @@ import sqlite3
 logging.basicConfig(filename='fcc.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
-dbname ='fcc2.sqlite'
+dbname ='fcc.sqlite'
 club_id = 'fzxv68x'
 
 #programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
