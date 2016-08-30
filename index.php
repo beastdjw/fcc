@@ -52,7 +52,7 @@
 <html>
 
 <head>
-  <title>FC Castricum <?php echo "jantje"; ?></title>
+  <title>FC Castricum <?php echo $team; ?></title>
   <meta charset="utf-8">
   <meta name="description" content="Voor FC Castricum staan hier alle teams het programma, de competitiestand, de bekerstand en de uitslagen">
   <meta name="keywords" content="FC Castricum,FC,Castricum,voetbal,Castricum,FC-Castricum,wedstrijd,beker,competitie,programma,uitslag,uitslagen,uitwedstrijd,thuiswedstrijd">
