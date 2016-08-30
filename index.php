@@ -2,21 +2,33 @@
 <?php
 
   //$team = strtoupper(htmlspecialchars($_GET["team"]));
-  $team = htmlspecialchars($_GET["team"]);
+  //$team = htmlspecialchars($_GET["team"]);
+  //if (!empty (htmlspecialchars($_GET["team"]))
+  //   $team = htmlspecialchars($_GET["team"])  
+  $team = array_key_exists('team', $_GET) ? $_GET['team'] : '';
+  htmlspecialchars($team);
   $cookie_name = "fccastricum_team";
-
-  $db = new SQLite3('/var/lib/fcc/fcc.sqlite');
-  if (!db) die ($error);
+  //for testing
+  //$team = "2 (zat)";
+  //echo 'Hello World',$team;
+  
+//$db = new SQLite3('/var/lib/fcc/fcc.sqlite');
+  $db = new PDO('sqlite:/var/lib/fcc/fcc.sqlite');
+  if (!$db) die ($error);
 
 
 
   if ($team) {
     //$sql = "SELECT DISTINCT fccteam from competitie";
-    $sql = "SELECT naam from teams";
-    $result = $db->query($sql);
-    if (!result) die("Cannot execute query.");
+    //$sql = "SELECT naam from teams";
+    $STH = $db->prepare("SELECT naam from teams");
+    $STH->execute();
+    //$result = $db->query($sql);
+    //if (!$result) die("Cannot execute query.");
     $gevonden= False; //initialisatie
-    while (($row = $result->fetchArray()) AND !($gevonden)) {
+    while(( $row = $STH->fetch(PDO::FETCH_ASSOC)) AND !($gevonden))  {
+    //while (($row = $result->fetchArray()) AND !($gevonden)) {
+      //echo $row["naam"].'<br>';
       if ($row["naam"]==$team)
       $gevonden = True;
     }
@@ -40,7 +52,7 @@
 <html>
 
 <head>
-  <title>FC Castricum <?php echo $team; ?></title>
+  <title>FC Castricum <?php echo "jantje"; ?></title>
   <meta charset="utf-8">
   <meta name="description" content="Voor FC Castricum staan hier alle teams het programma, de competitiestand, de bekerstand en de uitslagen">
   <meta name="keywords" content="FC Castricum,FC,Castricum,voetbal,Castricum,FC-Castricum,wedstrijd,beker,competitie,programma,uitslag,uitslagen,uitwedstrijd,thuiswedstrijd">
@@ -263,75 +275,77 @@
               <li><a href="?team=1 (zat)">1 (zat)</a></li>
               <li><a href="?team=2 (zon)">2 (zon)</a></li>
               <li><a href="?team=2 (zat)">2 (zat)</a></li>
-              <li><a href="?team=3 (zon)">3 (zon)</a></li>
               <li><a href="?team=3 (zat)">3 (zat)</a></li>
               <li><a href="?team=4 (zat)">4 (zat)</a></li>
               <li><a href="?team=5 (zat)">5 (zat)</a></li>
-              <li><a href="?team=6 (zat)">6 (zat)</a></li>
-              <li><a href="?team=7 (zat)">7 (zat)</a></li>
             </ul>
-            <a class="trigger right-caret">Meisjes</a>
+            <a class="trigger right-caret">Dames en Meisjes</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=MB1">MB1</a></li>
-              <li><a href="?team=MC1">MC1</a></li>
-              <li><a href="?team=MC2">MC2</a></li>
-              <li><a href="?team=MD1">MD1</a></li>
-              <li><a href="?team=ME1">ME1</a></li>
+              <li><a href="?team=VR1 (zat)">VR1 (zat)</a></li>
+              <li><a href="?team=MO17:1">MO17-1</a></li>
+              <li><a href="?team=MO13:1">MO13-1</a></li>
             </ul>
-            <a class="trigger right-caret">A</a>
+            <a class="trigger right-caret">JO19</a> 
+	    <ul class="dropdown-menu sub-menu">
+              <li><a href="?team=JO19:1">JO19-1</a></li>
+              <li><a href="?team=JO19:2">JO19-2</a></li>
+              <li><a href="?team=JO19:3">JO19-3</a></li>
+            </ul>
+            <a class="trigger right-caret">JO17</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=A1 (zon)">A1 (zon)</a></li>
-              <li><a href="?team=A2 (zon)">A2 (zon)</a></li>
-              <li><a href="?team=A3 (zon)">A3 (zon)</a></li>
+              <li><a href="?team=JO17:1">JO17-1</a></li>
+              <li><a href="?team=JO17:2">JO17-2</a></li>
+              <li><a href="?team=JO17:3">JO17-3</a></li>
+              <li><a href="?team=JO17:4">JO17-4</a></li>
             </ul>
-            <a class="trigger right-caret">B</a>
+            <a class="trigger right-caret">JO15</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=B1">B1</a></li>
-              <li><a href="?team=B2">B2</a></li>
-              <li><a href="?team=B3">B3</a></li>
-              <li><a href="?team=B4">B4</a></li>
+	      <li><a href="?team=JO15:1">JO15-1</a></li>
+              <li><a href="?team=JO15:2">JO15-2</a></li>
+              <li><a href="?team=JO15:3">JO15-3</a></li>
+              <li><a href="?team=JO15:4">JO15-4</a></li>
+              <li><a href="?team=JO15:5">JO15-5</a></li>
             </ul>
-            <a class="trigger right-caret">C</a>
+            <a class="trigger right-caret">JO13</a>
+            <ul class="dropdown-menu sub-menu">  
+              <li><a href="?team=JO13:1">JO13-1</a></li>
+              <li><a href="?team=JO13:2">JO13-2</a></li>
+              <li><a href="?team=JO13:3">JO13-3</a></li>
+              <li><a href="?team=JO13:4">JO13-4</a></li>
+              <li><a href="?team=JO13:5">JO13-5</a></li>
+            </ul>
+            <a class="trigger right-caret">JO12</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=C1">C1</a></li>
-              <li><a href="?team=C2">C2</a></li>
-              <li><a href="?team=C3">C3</a></li>
-              <li><a href="?team=C4">C4</a></li>
-              <li><a href="?team=C5">C5</a></li>
+              <li><a href="?team=JO12:1">JO12-1</a></li>
             </ul>
-            <a class="trigger right-caret">D</a>
+            <a class="trigger right-caret">JO11</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=D1">D1</a></li>
-              <li><a href="?team=D2">D2</a></li>
-              <li><a href="?team=D3">D3</a></li>
-              <li><a href="?team=D4">D4</a></li>
-              <li><a href="?team=D5">D5</a></li>
-              <li><a href="?team=O12 1">O12 1</a></li>
+              <li><a href="?team=JO11:1">JO11-1</a></li>
+              <li><a href="?team=JO11:2">JO11-2</a></li>
+              <li><a href="?team=JO11:3">JO11-3</a></li>
+              <li><a href="?team=JO11:4">JO11-4</a></li>
+              <li><a href="?team=JO11:5">JO11-5</a></li>
+              <li><a href="?team=JO11:6">JO11-6</a></li>
+              <li><a href="?team=JO11:7">JO11-7</a></li>
             </ul>
-            <a class="trigger right-caret">E</a>
+	    <a class="trigger right-caret">JO10</a>
+            <ul class="dropdown-menu sub-menu">  
+              <li><a href="?team=JO10:1">JO10-1</a></li>
+            </ul>            
+            <a class="trigger right-caret">JO9</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=E1">E1</a></li>
-              <li><a href="?team=E2">E2</a></li>
-              <li><a href="?team=E3">E3</a></li>
-              <li><a href="?team=E4">E4</a></li>
-              <li><a href="?team=E5">E5</a></li>
-              <li><a href="?team=E6">E6</a></li>
-              <li><a href="?team=E7">E7</a></li>
-              <li><a href="?team=E8">E8</a></li>
-              <li><a href="?team=E9">E9</a></li>
-              <li><a href="?team=E10">E10</a></li>
-              <li><a href="?team=O10 1">O10 1</a></li>
+              <li><a href="?team=JO9:1">JO9-1</a></li>
+              <li><a href="?team=JO9:2">JO9-2</a></li>
+              <li><a href="?team=JO9:3">JO9-3</a></li>
+              <li><a href="?team=JO9:4">JO9-4</a></li>
+              <li><a href="?team=JO9:5">JO9-5</a></li>
+              <li><a href="?team=JO9:6">JO9-6</a></li>
             </ul>
-            <a class="trigger right-caret">F</a>
+            <a class="trigger right-caret">JO8</a>
             <ul class="dropdown-menu sub-menu">
-              <li><a href="?team=F1">F1</a></li>
-              <li><a href="?team=F2">F2</a></li>
-              <li><a href="?team=F3">F3</a></li>
-              <li><a href="?team=F4">F4</a></li>
-              <li><a href="?team=F5">F5</a></li>
-              <li><a href="?team=F6">F6</a></li>
-              <li><a href="?team=F7">F7</a></li>
+              <li><a href="?team=JO8:1">JO8-1</a></li>
             </ul>
+
           </li>
         </ul>
         <a class="navbar-brand" href="#">FC Castricum</a>
@@ -377,13 +391,18 @@
       <p>Uitslag laatste wedstrijd
         <br>
         <?php
+          //echo $team;
           $sql = "SELECT datum,thuisteam,uitteam,uitslag,uitslag.soort
                   FROM uitslag JOIN teams
                   ON uitslag.knvb_id=teams.knvb_id
                   WHERE teams.naam='$team' LIMIT 1";
-          $result = $db->query($sql);
-          if (!result) die("Cannot execute query.");
-          while ($row = $result->fetchArray()) {
+
+          $STH = $db->prepare($sql);
+          $STH->execute();
+    //      $result = $db->query($sql);
+      //    if (!result) die("Cannot execute query.");
+          //while ($row = $result->fetchArray()) {
+          while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {         
             $date = date_create($row["datum"]);
             echo $row["thuisteam"]." - ".$row["uitteam"]."<br><font size=\"15\">".$row["uitslag"]."</font><br>".$row["soort"]."wedstrijd gespeeld op: ".date_format($date, 'j-n-Y');//
           }
@@ -415,10 +434,16 @@
             FROM wedstrijden JOIN teams
             ON wedstrijden.knvb_id=teams.knvb_id
             WHERE teams.naam='$team'";
-    $result = $db->query($sql);
-    if (!result) die("Cannot execute query.");
+    $STH = $db->prepare($sql);
+    $STH->execute();
+    //      $result = $db->query($sql);
+      //    if (!result) die("Cannot execute query.");
+          //while ($row = $result->fetchArray()) {
+    while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
+    //$result = $db->query($sql);
+    //if (!result) die("Cannot execute query.");
     // output data of each row
-    while($row = $result->fetchArray()) {
+    //while($row = $result->fetchArray()) {
       if ($row["afgelast"]=='ja')
         echo "<tr bgcolor=red><td>".$row["datum"]."</td><td>".$row["aanwezig"]."</td><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td><strong>"."AFGELAST"."</td></strong><td>"."<strong>AFGELAST"."</td>"."</strong></tr>";
       else
@@ -457,10 +482,15 @@
             FROM competitie JOIN teams
             ON competitie.knvb_id=teams.knvb_id
             WHERE teams.naam='$team'";
-    $result = $db->query($sql);
-    if (!result) die("Cannot execute query.");
+      $STH = $db->prepare($sql);
+      $STH->execute();
+    while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
 
-    while($row = $result->fetchArray()) {
+
+    //$result = $db->query($sql);
+    //if (!result) die("Cannot execute query.");
+
+    //while($row = $result->fetchArray()) {
         echo "<tr><td>".$row["nr"].
              "</td><td>".$row["team"].
              "</td><td>".$row["gespeeld"].
@@ -514,10 +544,16 @@ Toggle</button>-->
             FROM beker JOIN teams
             ON beker.knvb_id=teams.knvb_id
             WHERE teams.naam='$team'";
-    $result = $db->query($sql);
-    if (!result) die("Cannot execute query.");
+    //$result = $db->query($sql);
+    //if (!result) die("Cannot execute query.");
 
-    while($row = $result->fetchArray()) {
+    //while($row = $result->fetchArray()) {
+    $STH = $db->prepare($sql);
+    $STH->execute();
+    //      $result = $db->query($sql);
+      //    if (!result) die("Cannot execute query.");
+          //while ($row = $result->fetchArray()) {
+    while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
           echo "<tr><td>".$row["nr"].
           "</td><td>".$row["team"].
           "</td><td>".$row["gespeeld"].
@@ -564,14 +600,18 @@ Toggle</button>-->
             FROM uitslag JOIN teams
             ON uitslag.knvb_id=teams.knvb_id
             WHERE teams.naam='$team'";
-    $result = $db->query($sql);
-    if (!result) die("Cannot execute query.");
+    //$result = $db->query($sql);
+    //if (!result) die("Cannot execute query.");
 
-    while($row = $result->fetchArray()) {
+    //while($row = $result->fetchArray()) {
+    $STH = $db->prepare($sql);
+    $STH->execute();
+    while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
         echo "<tr><td>".$row["datum"]."</td><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitslag"]."</td><td>".$row["soort"]."</td>"."</tr>";
     }
 
-    $db->close();
+    //$db->close();
+    $db = null;
     ?>
         </tbody>
       </table>
