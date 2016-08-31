@@ -6,6 +6,32 @@
 
 <html>
   <head>
+        <script type="text/javascript">
+        function addZero(i) {
+           if (i < 10) {
+              i = "0" + i;
+           }
+           return i;
+        }
+
+        function timedMsg()
+        {
+           var t=setInterval("change_time();",1000);
+        }
+        function change_time()
+        {
+           var d = new Date();
+           var curr_hour = d.getHours();
+           var curr_min = d.getMinutes();
+           var curr_sec = d.getSeconds();
+           //if(curr_hour > 12)
+           //   curr_hour = curr_hour - 12;
+           document.getElementById('Hour').innerHTML =curr_hour+':';
+           document.getElementById('Minut').innerHTML=addZero(curr_min)+':';
+           document.getElementById('Second').innerHTML=addZero(curr_sec);
+        }
+        timedMsg();   
+    </script>
     <style>
        body {
           background-image: url("grass.jpg");
@@ -23,6 +49,15 @@
 	     opacity: 0.9;
           
        }
+       h2 {
+             font-family: "Lucida Console", Verdana, Arial;
+             font-size: 1.5em; /* 40px/16=2.5em */
+             color: white;
+             text-align:center;
+             opacity: 0.9;
+
+       }
+
        table {
           width:100%;
          
@@ -48,17 +83,29 @@
 
        .wedstrijden {
           background-color: rgba(0,50,0, 0.6);
-	  width:80%;
+	  width:65%;
           height:500px;
           float:left;
        }
 
        .fcc-info {
-          background-color: rgba(230,230,230, 0.95);
-          width:20%;
-          height:500px;
+	  margin-left: 20px;
+          padding-left: 10px;
+          padding-right: 10px;
+          background-color: rgba(0,50,0, 0.6);
+          border: 2px solid white;
+          border-radius:10px;
+          width:25%;
+          height:350px;
           float:left;
-          color: #
+          color: #0;
+          font-family: Tahoma,Arial Narrow,Arial,sans-serif;
+          font-size: 22px;
+        font-style: normal;
+        font-variant: normal;
+        font-weight: 400;
+        line-height: 30px;
+
        }
        .tablehead {
           background-color: rgba(150,230,150, 0.9);
@@ -74,7 +121,7 @@
 </head>
 <body>
 
-    <h1>Welkom bij FC Castricum</h1>
+    <h1>Welkom bij FC Castricum      <span style="color:#ddffdd" id="Hour"></span><span style="color:#ddffdd" id="Minut"></span><span style="color:#ddffdd"id="Second"></span> </h1>
     <div class="wedstrijden">
       <table>
         <thead class="tablehead">
@@ -90,9 +137,10 @@
 
         <tbody>
           <?php
+          $datum = (date('Y-m-d'));
  	  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld 
                    FROM wedstrijden 
-           	   WHERE datum='2016-08-31' 
+           	   WHERE datum='$datum' 
                    ORDER by aanvang";
     	  $STH = $db->prepare($sql);
     	  $STH->execute();
@@ -108,6 +156,8 @@
    </div>
    
    <div class="fcc-info">
+   <H2>Kleedkamers</H2>
+   <p>Onze vrijwilligers doen hun best om u een nette kleedkamer aan te bieden. Helpt u mee door uw afval in de prullenbak te gooien en de kleedkamer na gebruik even aan te vegen?</p>
    </div>
 
 
