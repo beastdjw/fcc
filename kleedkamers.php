@@ -25,25 +25,40 @@
        }
        table {
           width:100%;
-          color: #002200;
-          font-family: "Lucida Console", Verdana, Arial;
-          font-size: 1em; /* 40px/16=2.5em */
-          
+         
+          //padding: 30px;
+       //   font-family: "Lucida Console", Verdana, Arial;
+        //  font-size: 1.7em; /* 40px/16=2.5em */
+          font-family: Tahoma,Arial Narrow,Arial,sans-serif;
+	font-size: 33px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 30.8px;
 
        }
-       
+       th,td {
+	  padding: 10px;
+          color:#006400;
+       }
+       td {
+          padding: 10px;
+          color:#aaffaa;
+       }
+
        .wedstrijden {
-          background-color: rgba(150,230,150, 0.6);
-	  width:800px;
+          background-color: rgba(0,50,0, 0.6);
+	  width:80%;
           height:500px;
           float:left;
        }
 
        .fcc-info {
           background-color: rgba(230,230,230, 0.95);
-          width:400px;
+          width:20%;
           height:500px;
-          float:right;
+          float:left;
+          color: #
        }
        .tablehead {
           background-color: rgba(150,230,150, 0.9);
