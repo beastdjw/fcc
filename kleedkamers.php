@@ -25,7 +25,7 @@
     $array_wedstrijden[] = array($row["aanvang"],$row["thuisteam"],$row["thuiskk"],$row["uitteam"],$row["uitkk"],$row["veld"]);
     //echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
   }
-  #$aantal_wedstrijden = count($array_wedstrijden);
+
   $db = null;
 ?>
 
