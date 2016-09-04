@@ -2,60 +2,123 @@
 <?php
   $db = new PDO('sqlite:/var/lib/fcc/fcc.sqlite');
   if (!$db) die ($error);
+  date_default_timezone_set("Europe/Amsterdam");
+
+
+  $amsterdam_time = date("H:i");
+  $datum = (date('Y-m-d'));
+  #$amsterdam_time = "10:00"; #for debugging purposes
+  #$datum = "2016-09-03"; #for debugging purposes
+
+  $low_time = date("H:i",(strtotime($amsterdam_time) - 90*60)); #anderhalve uur van te voren laten zien
+  $high_time = date("H:i",(strtotime($amsterdam_time) + 90*60)); #tot anderhalve uur na het begin van de wedstrijd
+
+
+  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld
+           FROM wedstrijden
+           WHERE datum='$datum' AND lokatie='thuis' AND aanvang>='$low_time' AND aanvang<='$high_time'
+           ORDER by aanvang";
+  $STH = $db->prepare($sql);
+  $STH->execute();
+  $array_wedstrijden = [];
+  $i = 0;
+  while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
+    $array_wedstrijden[] = array($row["aanvang"],$row["thuisteam"],$row["thuiskk"],$row["uitteam"],$row["uitkk"],$row["veld"]);
+    //echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
+  }
+  #$aantal_wedstrijden = count($array_wedstrijden);
+
+    $db = null;
+
 ?>
 
 <html>
   <head>
         <script type="text/javascript">
-        var messagenr = 1;
-        function addZero(i) {
-           if (i < 10) {
-              i = "0" + i;
-           }
-           return i;
+
+        var max_lines = 13;
+        var js_array = <?php echo json_encode($array_wedstrijden); ?>;
+        var nr_pages = Math.ceil(js_array.length / max_lines);
+        var actual_page = 0;
+        //document.write(nr_pages);
+        //for(var i=0;i<js_array.length;i++) {
+        //document.write(js_array[i]);
+      //}
+        function timedEvent() {
+           var t1=setInterval("showWedstrijden();",7000);
         }
 
-        function timedMsg()
-        {
-           var t=setInterval("change_time();",1000);
-           var t2=setInterval("changeText();",7000);
+        function makehtml_ofarray(inputarray) {
+          var html = '';
+          var datafield;
+          for(var i=0;i<inputarray.length;i++) {
+            html = html + "<tr>";
+            for (var j=0;j<inputarray[i].length;j++) {
+                  //window.alert (inputarray[i][j]);
+                datafield = inputarray[i][j];
+                if (datafield == null) {
+                  datafield = "";
+                  console.log(datafield);
+                }
+                html = html + "<td>" + datafield + "</td>";
+            }
+            html = html + "</tr>"
+            //document.write(js_array[i]);
+          }
+
+          return html;
+
         }
-        function change_time()
-        {
-           var d = new Date();
-           var curr_hour = d.getHours();
-           var curr_min = d.getMinutes();
-           var curr_sec = d.getSeconds();
-           //if(curr_hour > 12)
-           //   curr_hour = curr_hour - 12;
-           document.getElementById('Hour').innerHTML =curr_hour+':';
-           document.getElementById('Minut').innerHTML=addZero(curr_min)+':';
-           document.getElementById('Second').innerHTML=addZero(curr_sec);
+
+        function showWedstrijden() {
+           //var tabel_html = for(var i=0;i<js_array.length;i++) {document.write(js_array[i]); }
+          var tabel_html ="";
+          var max_row_nr;
+
+          if (js_array.length > 0) {
+            if (actual_page == nr_pages) {
+              actual_page = 1;
+            }
+            else {
+               actual_page = actual_page + 1;
+            }
+            var min_row_nr = (actual_page-1)*max_lines;
+            if (actual_page == nr_pages) {
+               max_row_nr = js_array.length;
+            }
+            else max_row_nr = (max_lines * actual_page);
+
+            var part_array = js_array.slice(min_row_nr,max_row_nr);
+
+            tabel_html = makehtml_ofarray(part_array);
+            //tabel_html = tabel_html + "<tr style=\"border-style: none;\"><td style=\"border-style: none;\"></td><td></td><td>"+actual_page+"/"+nr_pages+"</td><td></td><td></td><td></td></tr>";
+
+            if (nr_pages > 1) {
+              tabel_html = tabel_html + "<tr><td style=\"border-style: none;\"</td><td style=\"border-style: none;\"</td><td style=\"border-style: none;\">"+actual_page+"/"+nr_pages+"</td></tr>";
+            }
+          }
+          else {
+            tabel_html = "<p>Geen wedstrijden op dit moment.</p>"
+          }
+          document.getElementById("part_wedstrijden").innerHTML = tabel_html;
+
+
+
+           //alert("Hello! I am an alert box!");
+           //for(var i=0;i<js_array.length;i++) {document.write(js_array[i]); }
+
+           //table_content.refresh();
         }
-        function changeText()
-        { 
-           document.getElementById('hide1').style.display = 'none';
-           document.getElementById('hide2').style.display = 'none';
-	   document.getElementById('hide3').style.display = 'none';
- 
-           switch(messagenr) {
-           	case 1:
-                   document.getElementById('hide1').style.display = 'inline';
-                   messagenr = 2;
-                   break;
-                case 2:
-                   document.getElementById('hide2').style.display = 'inline';
-                   messagenr = 3;
-                   break;
-                case 3:
-                   document.getElementById('hide3').style.display = 'inline';
-                   messagenr = 1;
-                   break;
-           }
-        }   
-        timedMsg();   
-        changeText();
-    </script>
+
+
+        function timedRefresh(timeoutPeriod) {
+	         setTimeout("location.reload(true);",timeoutPeriod);
+        }
+
+
+        window.onload = timedRefresh(15*60*1000);
+        timedEvent();
+        </script>
     <style>
        body {
           background-image: url("grass.jpg");
@@ -70,8 +133,8 @@
              font-size: 2em; /* 40px/16=2.5em */
              color: white;
              text-align:center;
-	     opacity: 0.9;
-          
+	           opacity: 0.9;
+
        }
        h2 {
              font-family: "Lucida Console", Verdana, Arial;
@@ -84,34 +147,31 @@
 
        table {
           width:100%;
-         
-          //padding: 30px;
-       //   font-family: "Lucida Console", Verdana, Arial;
-        //  font-size: 1.7em; /* 40px/16=2.5em */
+          padding: 1.5%;
           font-family: Tahoma,Arial Narrow,Arial,sans-serif;
-	font-size: 1.7vw;
-	font-style: normal;
-	font-variant: normal;
-	font-weight: 400;
-	line-height: 30.8px;
+        	font-size: 1.7vw;
+        	font-style: normal;
+        	font-variant: normal;
+        	font-weight: 400;
+        	line-height: 30.8px;
 
        }
        th {
-	  padding: 10px;
+          padding: 1.2%;
           color:#006400;
           background-color: rgba(102,255,0, 0.9);
        }
        td {
-          padding: 10px;
+          padding: 1.2%;
           color:#aaffaa;
           border-bottom: solid;
        }
 
        .wedstrijden {
           background-color: rgba(0,50,0, 0.6);
-	  width:65%;
-          height:500px;
-          float:left;
+	  //width:65%;
+          height:80%;
+          //float:left;
        }
 
        .fcc-info {
@@ -135,16 +195,15 @@
        }
        tr {
           text-align: center;
-       } 
+       }
        #text-bottom {
-          color: #002200;
-	  vertical-align: text-bottom;       
+          color: #aaffaa;
+	  vertical-align: text-bottom;
 }
 </style>
 </head>
 <body>
 
-    <h1>Welkom bij FC Castricum      <span style="color:#ddffdd" id="Hour"></span><span style="color:#ddffdd" id="Minut"></span><span style="color:#ddffdd"id="Second"></span> </h1>
     <div class="wedstrijden">
       <table>
         <thead class="tablehead">
@@ -158,39 +217,22 @@
           </tr>
         </thead>
 
-        <tbody>
-          <?php
-          $datum = (date('Y-m-d'));
- 	  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld 
-                   FROM wedstrijden 
-           	   WHERE datum='$datum' 
-                   ORDER by aanvang";
-    	  $STH = $db->prepare($sql);
-    	  $STH->execute();
-    	  while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
-        		echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
-    	  }		
-
-    	  $db = null;
+        <tbody id="part_wedstrijden">
+        <tr><td>initializing...</td></tr>
+        <?php
+        #foreach ($array_wedstrijden as $wedstrijd) {
+        #  echo "<tr>";
+        #  foreach ($wedstrijd as $wedstrijd_details) {
+        #    echo "<td>".$wedstrijd_details."</td>";
+        #  }
+        #  echo "</tr>";
+        #}
+    	  #$db = null;
     	  ?>
+
         </tbody>
       </table>
       <p id="text-bottom">KK = Kleedkamer</p>
-   </div>
-   
-   <div class="fcc-info">
-      <div id="hide1">
-         <H2>Kleedkamers</H2>
-         <p>Onze vrijwilligers doen hun best om u een nette kleedkamer aan te bieden. Helpt u mee door uw afval in de prullenbak te gooien en de kleedkamer na gebruik even aan te vegen?</p>
-      </div>
-      <div id="hide2" style="display:none">
-         <H2>Welkom!</H2>
-         <p>Welkom op sportpark Noord End. Op dit scherm vindt u de veld- en kleedkamerindeling voor de wedstrijden van vandaag. Bezoekende clubs, meld u a.u.b. even bij het wedstrijdsecretariaat.</p>
-      </div>
-      <div id="hide3" style="display:none">
-          <H2>Sponsoring</H2>
-         <p>Met reclame maken bij FC Castricum bereikt u niet alleen een zeer grote groep Castricummers, u steunt er ook nog eens uw club mee! Ook sponsor worden bij FC Castricum? Neem contact op met de commissieleden.</p>
-      </div>
    </div>
 
 
