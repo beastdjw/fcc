@@ -13,7 +13,6 @@
   $low_time = date("H:i",(strtotime($amsterdam_time) - 90*60)); #anderhalve uur van te voren laten zien
   $high_time = date("H:i",(strtotime($amsterdam_time) + 90*60)); #tot anderhalve uur na het begin van de wedstrijd
 
-
   $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld
            FROM wedstrijden
            WHERE datum='$datum' AND lokatie='thuis' AND aanvang>='$low_time' AND aanvang<='$high_time'
@@ -27,9 +26,7 @@
     //echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
   }
   #$aantal_wedstrijden = count($array_wedstrijden);
-
-    $db = null;
-
+  $db = null;
 ?>
 
 <html>
@@ -101,12 +98,8 @@
             tabel_html = "<p>Geen wedstrijden op dit moment.</p>"
           }
           document.getElementById("part_wedstrijden").innerHTML = tabel_html;
-
-
-
            //alert("Hello! I am an alert box!");
            //for(var i=0;i<js_array.length;i++) {document.write(js_array[i]); }
-
            //table_content.refresh();
         }
 
@@ -115,7 +108,7 @@
 	         setTimeout("location.reload(true);",timeoutPeriod);
         }
 
-
+        //showWedstrijden();
         window.onload = timedRefresh(15*60*1000);
         timedEvent();
         </script>
@@ -126,23 +119,6 @@
           background-position: right top;
           background-attachment: fixed;
           color: white;
-       }
-
-       h1 {
-             font-family: "Lucida Console", Verdana, Arial;
-             font-size: 2em; /* 40px/16=2.5em */
-             color: white;
-             text-align:center;
-	           opacity: 0.9;
-
-       }
-       h2 {
-             font-family: "Lucida Console", Verdana, Arial;
-             font-size: 1.5em; /* 40px/16=2.5em */
-             color: white;
-             text-align:center;
-             opacity: 0.9;
-
        }
 
        table {
@@ -218,19 +194,12 @@
         </thead>
 
         <tbody id="part_wedstrijden">
-        <tr><td>initializing...</td></tr>
-        <?php
-        #foreach ($array_wedstrijden as $wedstrijd) {
-        #  echo "<tr>";
-        #  foreach ($wedstrijd as $wedstrijd_details) {
-        #    echo "<td>".$wedstrijd_details."</td>";
-        #  }
-        #  echo "</tr>";
-        #}
-    	  #$db = null;
-    	  ?>
+        <tr><td></td></tr>
 
         </tbody>
+        <script type="text/javascript">
+          showWedstrijden();
+        </script>
       </table>
       <p id="text-bottom">KK = Kleedkamer</p>
    </div>

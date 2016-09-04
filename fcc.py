@@ -334,7 +334,7 @@ for knvb_id,teamnaam in team_dic.iteritems():
     #print teamnaam,knvb_id
 
     url = 'http://mijnclub.nu/clubs/teams/embed/%s/team/%s?layout=stand&stand=1&format=xml' % (club_id,teamnaam) #stand
-    url2 = 'http://mijnclub.nu/clubs/uitslagen/xml/%s/?team=%s&periode=SEIZOEN&seizoen=8' % (club_id,teamnaam) #uitslag
+    url2 = 'http://mijnclub.nu/clubs/uitslagen/xml/%s/?team=%s&periode=SEIZOEN&seizoen=9' % (club_id,teamnaam) #uitslag
     url3 = 'http://mijnclub.nu/clubs/teams/xml/%s/team/%s' % (club_id,teamnaam) #bekerstand
     #url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/E3'
 
