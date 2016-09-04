@@ -7,55 +7,7 @@
 <html>
   <head>
         <script type="text/javascript">
-        var messagenr = 1;
-        function addZero(i) {
-           if (i < 10) {
-              i = "0" + i;
-           }
-           return i;
-        }
-
-        function timedMsg()
-        {
-           var t=setInterval("change_time();",1000);
-           var t2=setInterval("changeText();",7000);
-        }
-        function change_time()
-        {
-           var d = new Date();
-           var curr_hour = d.getHours();
-           var curr_min = d.getMinutes();
-           var curr_sec = d.getSeconds();
-           //if(curr_hour > 12)
-           //   curr_hour = curr_hour - 12;
-           document.getElementById('Hour').innerHTML =curr_hour+':';
-           document.getElementById('Minut').innerHTML=addZero(curr_min)+':';
-           document.getElementById('Second').innerHTML=addZero(curr_sec);
-        }
-        function changeText()
-        { 
-           document.getElementById('hide1').style.display = 'none';
-           document.getElementById('hide2').style.display = 'none';
-	   document.getElementById('hide3').style.display = 'none';
- 
-           switch(messagenr) {
-           	case 1:
-                   document.getElementById('hide1').style.display = 'inline';
-                   messagenr = 2;
-                   break;
-                case 2:
-                   document.getElementById('hide2').style.display = 'inline';
-                   messagenr = 3;
-                   break;
-                case 3:
-                   document.getElementById('hide3').style.display = 'inline';
-                   messagenr = 1;
-                   break;
-           }
-        }   
-        timedMsg();   
-        changeText();
-    </script>
+           </script>
     <style>
        body {
           background-image: url("grass.jpg");
@@ -109,9 +61,9 @@
 
        .wedstrijden {
           background-color: rgba(0,50,0, 0.6);
-	  width:65%;
-          height:500px;
-          float:left;
+	  //width:65%;
+          height:800px;
+          //float:left;
        }
 
        .fcc-info {
@@ -137,14 +89,13 @@
           text-align: center;
        } 
        #text-bottom {
-          color: #002200;
+          color: #006400;
 	  vertical-align: text-bottom;       
 }
 </style>
 </head>
 <body>
 
-    <h1>Welkom bij FC Castricum      <span style="color:#ddffdd" id="Hour"></span><span style="color:#ddffdd" id="Minut"></span><span style="color:#ddffdd"id="Second"></span> </h1>
     <div class="wedstrijden">
       <table>
         <thead class="tablehead">
@@ -161,6 +112,7 @@
         <tbody>
           <?php
           $datum = (date('Y-m-d'));
+          $datum = "2016-09-03";
  	  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld 
                    FROM wedstrijden 
            	   WHERE datum='$datum' 
@@ -176,21 +128,6 @@
         </tbody>
       </table>
       <p id="text-bottom">KK = Kleedkamer</p>
-   </div>
-   
-   <div class="fcc-info">
-      <div id="hide1">
-         <H2>Kleedkamers</H2>
-         <p>Onze vrijwilligers doen hun best om u een nette kleedkamer aan te bieden. Helpt u mee door uw afval in de prullenbak te gooien en de kleedkamer na gebruik even aan te vegen?</p>
-      </div>
-      <div id="hide2" style="display:none">
-         <H2>Welkom!</H2>
-         <p>Welkom op sportpark Noord End. Op dit scherm vindt u de veld- en kleedkamerindeling voor de wedstrijden van vandaag. Bezoekende clubs, meld u a.u.b. even bij het wedstrijdsecretariaat.</p>
-      </div>
-      <div id="hide3" style="display:none">
-          <H2>Sponsoring</H2>
-         <p>Met reclame maken bij FC Castricum bereikt u niet alleen een zeer grote groep Castricummers, u steunt er ook nog eens uw club mee! Ook sponsor worden bij FC Castricum? Neem contact op met de commissieleden.</p>
-      </div>
    </div>
 
 
