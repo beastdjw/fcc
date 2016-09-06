@@ -479,18 +479,17 @@ for knvb_id,teamnaam in team_dic.iteritems():
     try:
         if (bekertreeopgehaald==False):
             raise
-        beker_diep = bekertree.findall("dl/dd/div/")
-        #print 'gevonden'
+        #beker_diep = bekertree.findall("dl/dd/div/") verandert in 2016-2017 seizoen (dat is het gevaar van mijnclub xml's)
+        beker_diep = bekertree.findall("dl/dd/")
         gevonden = True
     except:
         gevonden = False
-
     if (gevonden):
         #print repr(beker_diep)
-
         for div in beker_diep:
-            #print repr(jan)
+            #print repr(div) #hierkomt ie
             if (div.get('id')=='content_bekerstand'):
+
                 for table in div:
                     for tbody in table:
                         if (tbody.tag=="tbody"):
