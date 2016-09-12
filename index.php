@@ -375,8 +375,8 @@
             <a href="#div4" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">Uitslagen</a>
           </li>
           <li>
-            <a href="http://www.fc-castricum.nl/kleedkamers.php" class="hidden-xs">Veld/Kleedkamer</a>
-            <a href="http://www.fc-castricum.nl/kleedkamers.php" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">Veld/Kleedkamer</a>
+            <a href="kleedkamers.php" class="hidden-xs">Veld/Kleedkamer</a>
+            <a href="kleedkamers.php" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">Veld/Kleedkamer</a>
           </li>
 
         <!--  <li>

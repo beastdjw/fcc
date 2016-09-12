@@ -1,17 +1,42 @@
 <!DOCTYPE html>
 <?php
+  //echo 'jan is gek';
+  $showdatum = array_key_exists('showdatum', $_GET) ? $_GET['showdatum'] : '';
+  htmlspecialchars($showdatum);
+  $showtime = array_key_exists('showtime', $_GET) ? $_GET['showtime'] : '';
+  htmlspecialchars($showtime);
+  $showdifference = array_key_exists('showdifference', $_GET) ? $_GET['showdifference'] : '';
+  htmlspecialchars($showdifference);
+  $showlines = array_key_exists('showlines', $_GET) ? $_GET['showlines'] : '';
+  htmlspecialchars($showlines);
+  //echo "<p>".$showdatum."</p>";
+
   $db = new PDO('sqlite:/var/lib/fcc/fcc.sqlite');
   if (!$db) die ($error);
   date_default_timezone_set("Europe/Amsterdam");
-
-
   $amsterdam_time = date("H:i");
   $datum = (date('Y-m-d'));
+  $difference = 90; //minuten van te voren en erna
+  $maxlines = 10;
+  if ($showdatum !== '') {
+     $datum = $showdatum;
+  }
+  if ($showtime !== '') {
+      $amsterdam_time = $showtime;
+  }
+  if ($showdifference !== '') {
+      $difference = $showdifference;
+  }
+  if ($showlines !== '') {
+      $maxlines = $showlines;
+  }
+  #echo "<p>".$datum." ".$amsterdam_time." ".$difference." ".$maxlines."</p>";
+
   #$amsterdam_time = "10:00"; #for debugging purposes
   #$datum = "2016-09-03"; #for debugging purposes
 
-  $low_time = date("H:i",(strtotime($amsterdam_time) - 90*60)); #anderhalve uur van te voren laten zien
-  $high_time = date("H:i",(strtotime($amsterdam_time) + 90*60)); #tot anderhalve uur na het begin van de wedstrijd
+  $low_time = date("H:i",(strtotime($amsterdam_time) - ($difference*60))); #anderhalve uur van te voren laten zien
+  $high_time = date("H:i",(strtotime($amsterdam_time) + ($difference*60))); #tot anderhalve uur na het begin van de wedstrijd
 
   $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld
            FROM wedstrijden
@@ -33,11 +58,11 @@
   <head>
         <script type="text/javascript">
 
-        var max_lines = 13;
+        var max_lines = <?php echo $maxlines?>;
         var js_array = <?php echo json_encode($array_wedstrijden); ?>;
         var nr_pages = Math.ceil(js_array.length / max_lines);
         var actual_page = 0;
-        //document.write(nr_pages);
+        //document.write(nr_pages); test
         //for(var i=0;i<js_array.length;i++) {
         //document.write(js_array[i]);
       //}
