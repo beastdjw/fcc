@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <?php
 
-  //$team = strtoupper(htmlspecialchars($_GET["team"]));
+  //$team = strtoupper(htmlspecialchars($_GET["team"])); #this is issue 53 solution
   //$team = htmlspecialchars($_GET["team"]);
   //if (!empty (htmlspecialchars($_GET["team"]))
   //   $team = htmlspecialchars($_GET["team"])
