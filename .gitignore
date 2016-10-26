@@ -1,0 +1,2 @@
+#no logfiles in the git repository
+*.log
