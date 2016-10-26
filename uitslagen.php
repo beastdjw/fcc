@@ -57,10 +57,6 @@
 <html>
   <head>
         <script type="text/javascript">
-<<<<<<< HEAD
-           </script>
-=======
-
         var max_lines = <?php echo $maxlines?>;
         var js_array = <?php echo json_encode($array_wedstrijden); ?>;
         var nr_pages = Math.ceil(js_array.length / max_lines);
@@ -140,7 +136,6 @@
         window.onload = timedRefresh(15*60*1000);
         timedEvent();
         </script>
->>>>>>> fc23f68675437a29c8fd1620cbd9cc74b000f698
     <style>
        body {
           background-image: url("grass.jpg");
@@ -175,11 +170,7 @@
        .wedstrijden {
           background-color: rgba(0,50,0, 0.6);
 	  //width:65%;
-<<<<<<< HEAD
-          height:800px;
-=======
           height:80%;
->>>>>>> fc23f68675437a29c8fd1620cbd9cc74b000f698
           //float:left;
        }
 
@@ -206,13 +197,8 @@
           text-align: center;
        }
        #text-bottom {
-<<<<<<< HEAD
-          color: #006400;
-	  vertical-align: text-bottom;       
-=======
           color: #aaffaa;
 	  vertical-align: text-bottom;
->>>>>>> fc23f68675437a29c8fd1620cbd9cc74b000f698
 }
 </style>
 </head>
@@ -231,28 +217,9 @@
           </tr>
         </thead>
 
-<<<<<<< HEAD
-        <tbody>
-          <?php
-          $datum = (date('Y-m-d'));
-          $datum = "2016-09-03";
- 	  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld 
-                   FROM wedstrijden 
-           	   WHERE datum='$datum' 
-                   ORDER by aanvang";
-    	  $STH = $db->prepare($sql);
-    	  $STH->execute();
-    	  while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
-        		echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
-    	  }		
-
-    	  $db = null;
-    	  ?>
-=======
         <tbody id="part_wedstrijden">
         <tr><td></td></tr>
 
->>>>>>> fc23f68675437a29c8fd1620cbd9cc74b000f698
         </tbody>
         <script type="text/javascript">
           showWedstrijden();
