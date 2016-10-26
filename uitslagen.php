@@ -1,12 +1,9 @@
 <!DOCTYPE html>
+
 <?php
-  //echo 'jan is gek';
+  //echo "jan is gek";
   $showdatum = array_key_exists('showdatum', $_GET) ? $_GET['showdatum'] : '';
   htmlspecialchars($showdatum);
-  $showtime = array_key_exists('showtime', $_GET) ? $_GET['showtime'] : '';
-  htmlspecialchars($showtime);
-  $showdifference = array_key_exists('showdifference', $_GET) ? $_GET['showdifference'] : '';
-  htmlspecialchars($showdifference);
   $showlines = array_key_exists('showlines', $_GET) ? $_GET['showlines'] : '';
   htmlspecialchars($showlines);
   //echo "<p>".$showdatum."</p>";
@@ -16,41 +13,32 @@
   date_default_timezone_set("Europe/Amsterdam");
   $amsterdam_time = date("H:i");
   $datum = (date('Y-m-d'));
-  $difference = 90; //minuten van te voren en erna
+  //$difference = 90; //minuten van te voren en erna
   $maxlines = 10;
   if ($showdatum !== '') {
      $datum = $showdatum;
   }
-  if ($showtime !== '') {
-      $amsterdam_time = $showtime;
-  }
-  if ($showdifference !== '') {
-      $difference = $showdifference;
-  }
+
   if ($showlines !== '') {
       $maxlines = $showlines;
   }
-  #echo "<p>".$datum." ".$amsterdam_time." ".$difference." ".$maxlines."</p>";
 
-  #$amsterdam_time = "10:00"; #for debugging purposes
-  #$datum = "2016-09-03"; #for debugging purposes
-
-  $low_time = date("H:i",(strtotime($amsterdam_time) - ($difference*60))); #anderhalve uur van te voren laten zien
-  $high_time = date("H:i",(strtotime($amsterdam_time) + ($difference*60))); #tot anderhalve uur na het begin van de wedstrijd
-
-  $sql =  "SELECT aanvang,thuisteam,thuiskk,uitteam,uitkk,veld
-           FROM wedstrijden
-           WHERE datum='$datum' AND lokatie='thuis' AND aanvang>='$low_time' AND aanvang<='$high_time'
-           ORDER by aanvang";
+  $sql =  "SELECT uitslag,thuisteam,uitteam
+           FROM uitslag
+           WHERE datum='$datum'";
+           //ORDER by aanvang";
   $STH = $db->prepare($sql);
   $STH->execute();
-  $array_wedstrijden = [];
+  $array_uitslagen = [];
   $i = 0;
   while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
-    $array_wedstrijden[] = array($row["aanvang"],$row["thuisteam"],$row["thuiskk"],$row["uitteam"],$row["uitkk"],$row["veld"]);
+    $thuis_wo_colon = str_replace(":","-",$row["thuisteam"]);
+    $uit_wo_colon = str_replace(":","-",$row["uitteam"]);
+    $array_uitslagen[] = array($thuis_wo_colon,$uit_wo_colon,$row["uitslag"]);
     //echo "<tr><td>".$row["aanvang"]."</td><td>".$row["thuisteam"]."</td><td>".$row["thuiskk"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitkk"]."</td><td>".$row["veld"]."</td>"."</tr>";
+    //echo $row["thuisteam"].$row["uitteam"].$row["uitslag"]."\n";
+    //echo "<tr><td>".$row["thuisteam"]."</td><td>".$row["uitteam"]."</td><td>".$row["uitslag"]."</td>"."</tr>";
   }
-
   $db = null;
 ?>
 
@@ -58,15 +46,12 @@
   <head>
         <script type="text/javascript">
         var max_lines = <?php echo $maxlines?>;
-        var js_array = <?php echo json_encode($array_wedstrijden); ?>;
+        var js_array = <?php echo json_encode($array_uitslagen); ?>;
         var nr_pages = Math.ceil(js_array.length / max_lines);
         var actual_page = 0;
-        //document.write(nr_pages); test
-        //for(var i=0;i<js_array.length;i++) {
-        //document.write(js_array[i]);
-      //}
+
         function timedEvent() {
-           var t1=setInterval("showWedstrijden();",7000);
+           var t1=setInterval("showUitslagen();",7000);
         }
 
         function makehtml_ofarray(inputarray) {
@@ -91,7 +76,7 @@
 
         }
 
-        function showWedstrijden() {
+        function showUitslagen() {
            //var tabel_html = for(var i=0;i<js_array.length;i++) {document.write(js_array[i]); }
           var tabel_html ="";
           var max_row_nr;
@@ -114,17 +99,19 @@
             tabel_html = makehtml_ofarray(part_array);
             //tabel_html = tabel_html + "<tr style=\"border-style: none;\"><td style=\"border-style: none;\"></td><td></td><td>"+actual_page+"/"+nr_pages+"</td><td></td><td></td><td></td></tr>";
 
-            if (nr_pages > 1) {
-              tabel_html = tabel_html + "<tr><td style=\"border-style: none;\"</td><td style=\"border-style: none;\"</td><td style=\"border-style: none;\">"+actual_page+"/"+nr_pages+"</td></tr>";
-            }
+
+            //if (nr_pages > 1) {
+
+            //}
           }
           else {
-            tabel_html = "<p>Geen wedstrijden op dit moment.</p>"
+            tabel_html = "<p>Geen uitslagen op dit moment.</p>"
           }
           document.getElementById("part_wedstrijden").innerHTML = tabel_html;
-           //alert("Hello! I am an alert box!");
-           //for(var i=0;i<js_array.length;i++) {document.write(js_array[i]); }
-           //table_content.refresh();
+          if (nr_pages > 1) {
+            document.getElementById("pagnr").innerHTML = actual_page+"/"+nr_pages;
+
+          }
         }
 
 
@@ -148,6 +135,7 @@
        table {
           width:100%;
           padding: 1.5%;
+          padding-top: 0%;
           font-family: Tahoma,Arial Narrow,Arial,sans-serif;
         	font-size: 1.7vw;
         	font-style: normal;
@@ -196,24 +184,44 @@
        tr {
           text-align: center;
        }
-       #text-bottom {
+    #text-bottom {
           color: #aaffaa;
 	  vertical-align: text-bottom;
-}
+    }
+    .footer {
+        font-size:230%;
+        font-family: Tahoma,Arial Narrow,Arial,sans-serif;
+
+    }
+    .alignleft {
+        float: left;
+        text-align:left;
+        width:33.33%;
+    }
+    .aligncenter {
+        float: left;
+        text-align:center;;
+        width:33.33%;
+    }
+
+    .alignright {
+        float: left;
+        text-align:center;
+        width:33.33%;
+
+    }
 </style>
 </head>
 <body>
 
     <div class="wedstrijden">
       <table>
+        <div align="center" id="pagnr" style="color:#aaffaa;font-family:Tahoma,Arial Narrow,Arial,sans-serif; font-size:180%;">&nbsp</div>
         <thead class="tablehead">
           <tr>
-            <th>Tijdstip</th>
             <th>Thuisteam</th>
-	    <th>KK</th>
             <th>Uitteam</th>
-            <th>KK</th>
-            <th>Veld</th>
+	          <th>Uitslag</th>
           </tr>
         </thead>
 
@@ -221,12 +229,20 @@
         <tr><td></td></tr>
 
         </tbody>
+
         <script type="text/javascript">
-          showWedstrijden();
+          showUitslagen();
         </script>
       </table>
-      <p id="text-bottom">KK = Kleedkamer</p>
-   </div>
+        <div class="footer">
+          <div class="alignleft">&nbsp</div>
+          <div class="aligncenter" style="color:#ffff00;font-size:80%;">Gemaakt door <b>Veldt.IT</b></div>
+          <div class="alignright" ">&nbsp</div>
+          <div style="clear: both;"></div>
+        </div>
+
+      <!--p id="pagnr" align="center" style="font-size:230%;font-family: Tahoma,Arial Narrow,Arial,sans-serif;"></p-->
+     </div>
 
 
 </body>

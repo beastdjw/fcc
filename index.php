@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <?php
 
-  //$team = strtoupper(htmlspecialchars($_GET["team"])); #this is issue 53 solution , hier zit de hotfix niet in
+  //$team = strtoupper(htmlspecialchars($_GET["team"])); #jthis is issue 53 solution , hier zit de hotfix niet in
   //$team = strtoupper(htmlspecialchars($_GET["team"])); #hotfix!!!!
   //$team = htmlspecialchars($_GET["team"]);
   //if (!empty (htmlspecialchars($_GET["team"]))
