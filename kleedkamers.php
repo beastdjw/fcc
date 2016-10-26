@@ -57,10 +57,7 @@
 <html>
   <head>
         <script type="text/javascript">
-<<<<<<< HEAD
            </script>
-=======
-
         var max_lines = <?php echo $maxlines?>;
         var js_array = <?php echo json_encode($array_wedstrijden); ?>;
         var nr_pages = Math.ceil(js_array.length / max_lines);
