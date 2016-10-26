@@ -4,14 +4,14 @@
   //$team = strtoupper(htmlspecialchars($_GET["team"]));
   //$team = htmlspecialchars($_GET["team"]);
   //if (!empty (htmlspecialchars($_GET["team"]))
-  //   $team = htmlspecialchars($_GET["team"])  
+  //   $team = htmlspecialchars($_GET["team"])
   $team = array_key_exists('team', $_GET) ? $_GET['team'] : '';
   htmlspecialchars($team);
   $cookie_name = "fccastricum_team";
   //for testing
   //$team = "2 (zat)";
   //echo 'Hello World',$team;
-  
+
 //$db = new SQLite3('/var/lib/fcc/fcc.sqlite');
   $db = new PDO('sqlite:/var/lib/fcc/fcc.sqlite');
   if (!$db) die ($error);
@@ -285,7 +285,7 @@
               <li><a href="?team=MO17:1">MO17-1</a></li>
               <li><a href="?team=MO13:1">MO13-1</a></li>
             </ul>
-            <a class="trigger right-caret">JO19</a> 
+            <a class="trigger right-caret">JO19</a>
 	    <ul class="dropdown-menu sub-menu">
               <li><a href="?team=JO19:1">JO19-1</a></li>
               <li><a href="?team=JO19:2">JO19-2</a></li>
@@ -307,7 +307,7 @@
               <li><a href="?team=JO15:5">JO15-5</a></li>
             </ul>
             <a class="trigger right-caret">JO13</a>
-            <ul class="dropdown-menu sub-menu">  
+            <ul class="dropdown-menu sub-menu">
               <li><a href="?team=JO13:1">JO13-1</a></li>
               <li><a href="?team=JO13:2">JO13-2</a></li>
               <li><a href="?team=JO13:3">JO13-3</a></li>
@@ -329,9 +329,9 @@
               <li><a href="?team=JO11:7">JO11-7</a></li>
             </ul>
 	    <a class="trigger right-caret">JO10</a>
-            <ul class="dropdown-menu sub-menu">  
+            <ul class="dropdown-menu sub-menu">
               <li><a href="?team=JO10:1">JO10-1</a></li>
-            </ul>            
+            </ul>
             <a class="trigger right-caret">JO9</a>
             <ul class="dropdown-menu sub-menu">
               <li><a href="?team=JO9:1">JO9-1</a></li>
@@ -374,6 +374,10 @@
             <a href="#div4" class="hidden-xs">Uitslagen</a>
             <a href="#div4" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">Uitslagen</a>
           </li>
+          <li>
+            <a href="kleedkamers.php" class="hidden-xs">Veld/Kleedkamer</a>
+            <a href="kleedkamers.php" class="visible-xs" data-toggle="collapse" data-target=".navbar-collapse">Veld/Kleedkamer</a>
+          </li>
 
         <!--  <li>
             <a href="#div5" class="hidden-xs">Foto's</a>
@@ -402,7 +406,7 @@
     //      $result = $db->query($sql);
       //    if (!result) die("Cannot execute query.");
           //while ($row = $result->fetchArray()) {
-          while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {         
+          while( $row = $STH->fetch(PDO::FETCH_ASSOC))  {
             $date = date_create($row["datum"]);
             echo $row["thuisteam"]." - ".$row["uitteam"]."<br><font size=\"15\">".$row["uitslag"]."</font><br>".$row["soort"]."wedstrijd gespeeld op: ".date_format($date, 'j-n-Y');//
           }

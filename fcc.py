@@ -9,23 +9,13 @@ import sqlite3
 logging.basicConfig(filename='fcc.log',format='%(asctime)s %(message)s',level=logging.DEBUG)
 
 #op productie andere directory
-dbname ='fcc.sqlite'
+dbname ='/var/lib/fcc/fcc.sqlite'
 club_id = 'fzxv68x'
 
 #programma(datum,klasse,thuis,uit,scheidsrechter,aanwezig,aanvang) VALUES(%s,%s,%s,%s,%s,%s,%s)"
 # voorbeeld list -> cats = ['Tom', 'Snappy', 'Kitty', 'Jessie', 'Chester']
 # voorbeeld tuple -> months = ('January','February','March','April','May','June','July','August','September','October','November','  December')
 # voorbeeld dictonary -> phonebook = {'Andrew Parson':8806336, 'Emily Everett':6784346, 'Peter Power':7658344, 'Lewis Lame':1122345}
-
-#teamlist=(  '1 (zat)','2 (zat)','3 (zat)','4 (zat)','5 (zat)','6 (zat)','7 (zat)',
-#            '2 (zon)','3 (zon)',
-#            'A1 (zon)','A2 (zon)','A3 (zon)',
-#            'B1','B2','B3','B4',
-#            'C1','C2','C3','C4','C5',
-#            'D1','D2','D3','D4','D5','O12 1',
-#            'E1','E2','E3','E4','E5','E6','E7','E8','E9','E10','O10 1',
-#            'F1','F2','F3','F4','F5','F6','F7',
-#            'MB1','MC1','MC2','MD1','ME1')
 
 try:
     conn = sqlite3.connect(dbname)
@@ -148,7 +138,7 @@ wedstrijdentree = ET.fromstring(data)
 db_write_error = False
 
 try:
-     c.execute("CREATE TABLE IF NOT EXISTS `wedstrijden` (`id` text,'knvb_id' text, 'afgelast' text, 'aanwezig' text, 'thuiskk' text, 'uitkk' text)")
+     c.execute("CREATE TABLE IF NOT EXISTS `wedstrijden` (`id` text,'knvb_id' text,'lokatie' text,'afgelast' text,'aanwezig' text,'thuiskk' text,'uitkk' text,'veld' text)")
      #-------gaat dit goed? alles deleten, commit komt later dus moet goed gaan
      c.execute("DELETE FROM `wedstrijden`")
 except:
@@ -184,6 +174,7 @@ for wedstrijd in wedstrijdentree.findall('wedstrijden/wedstrijd'):
     #teams.knvb_id
     wedstrijdproperties = {}
     wedstrijdproperties['id'] = wedstrijd.attrib['id']
+    wedstrijdproperties['lokatie'] = wedstrijd.attrib['lokatie']
     try:
         if (wedstrijd.attrib['afgelast']=='ja'):
             #print'afgelast:',wedstrijd.attrib['afgelast']
@@ -207,13 +198,13 @@ for wedstrijd in wedstrijdentree.findall('wedstrijden/wedstrijd'):
         if (wedstrijdelement.tag=='thuisteam'):
 	    try:
 		wedstrijdproperties['thuiskk'] = wedstrijdelement.attrib['kleedkamer']
-		print wedstrijdelement.attrib['kleedkamer']
+		#print wedstrijdelement.attrib['kleedkamer']
 	    except:
 		pass
         if (wedstrijdelement.tag=='uitteam'):
 	   try:
                 wedstrijdproperties['uitkk'] = wedstrijdelement.attrib['kleedkamer']
-		print wedstrijdelement.attrib['kleedkamer']
+		#print wedstrijdelement.attrib['kleedkamer']
 	   except:
 		pass
     #print wedstrijdproperties
@@ -343,7 +334,7 @@ for knvb_id,teamnaam in team_dic.iteritems():
     #print teamnaam,knvb_id
 
     url = 'http://mijnclub.nu/clubs/teams/embed/%s/team/%s?layout=stand&stand=1&format=xml' % (club_id,teamnaam) #stand
-    url2 = 'http://mijnclub.nu/clubs/uitslagen/xml/%s/?team=%s&periode=SEIZOEN&seizoen=8' % (club_id,teamnaam) #uitslag
+    url2 = 'http://mijnclub.nu/clubs/uitslagen/xml/%s/?team=%s&periode=SEIZOEN&seizoen=9' % (club_id,teamnaam) #uitslag
     url3 = 'http://mijnclub.nu/clubs/teams/xml/%s/team/%s' % (club_id,teamnaam) #bekerstand
     #url = 'http://mijnclub.nu/clubs/teams/xml/FZXV68X/team/E3'
 
@@ -488,18 +479,17 @@ for knvb_id,teamnaam in team_dic.iteritems():
     try:
         if (bekertreeopgehaald==False):
             raise
-        beker_diep = bekertree.findall("dl/dd/div/")
-        #print 'gevonden'
+        #beker_diep = bekertree.findall("dl/dd/div/") verandert in 2016-2017 seizoen (dat is het gevaar van mijnclub xml's)
+        beker_diep = bekertree.findall("dl/dd/")
         gevonden = True
     except:
         gevonden = False
-
     if (gevonden):
         #print repr(beker_diep)
-
         for div in beker_diep:
-            #print repr(jan)
+            #print repr(div) #hierkomt ie
             if (div.get('id')=='content_bekerstand'):
+
                 for table in div:
                     for tbody in table:
                         if (tbody.tag=="tbody"):
